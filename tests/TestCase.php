@@ -53,6 +53,33 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
             $table->string('name', 255)->nullable();
             $table->timestamps();
         });
+
+        Schema::create('test_related_alphas', function($table) {
+            $table->increments('id');
+            $table->string('name', 255)->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('test_model_test_related_alpha', function($table) {
+            $table->integer('test_model_id')->unsigned();
+            $table->integer('test_related_alpha_id')->unsigned();
+            $table->timestamps();
+            $table->primary(['test_model_id', 'test_related_alpha_id'], 'tmtra_primary');
+        });
+
+        Schema::create('test_related_betas', function($table) {
+            $table->increments('id');
+            $table->string('name', 255)->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('test_related_alpha_test_related_beta', function($table) {
+            $table->integer('test_related_alpha_id')->unsigned();
+            $table->integer('test_related_beta_id')->unsigned();
+            $table->integer('position')->nullable();
+            $table->dateTime('date')->nullable();
+            $table->primary(['test_related_alpha_id', 'test_related_beta_id'], 'tratrb_primary');
+        });
     }
 
 }

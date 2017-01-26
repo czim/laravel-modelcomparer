@@ -34,4 +34,14 @@ class TestModel extends Model
     {
         return $this->belongsTo(TestRelatedModel::class);
     }
+
+    public function testRelatedAlphas()
+    {
+        return $this->belongsToMany(TestRelatedAlpha::class);
+    }
+
+    public function testRelatedBetas()
+    {
+        return $this->belongsToMany(TestRelatedBeta::class);
+    }
 }
