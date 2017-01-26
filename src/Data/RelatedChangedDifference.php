@@ -71,6 +71,16 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
     }
 
     /**
+     * Returns difference object for related model.
+     *
+     * @return ModelDifference
+     */
+    public function difference()
+    {
+        return $this->difference;
+    }
+
+    /**
      * Returns model reference.
      *
      * Can be just the key, or class:key, depending on whether the model class is set.

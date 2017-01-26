@@ -26,9 +26,17 @@ class SingleRelationDifference extends AbstractRelationDifference
      */
     public function __construct($method, $type, AbstractRelatedDifference $difference)
     {
-        parent::__construct($method, $type, true);
+        parent::__construct($method, $type, false);
 
         $this->difference = $difference;
+    }
+
+    /**
+     * @return AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface
+     */
+    public function difference()
+    {
+        return $this->difference;
     }
 
     /**

@@ -100,6 +100,26 @@ class AttributeDifference implements DifferenceLeafInterface
     }
 
     /**
+     * Returns whether the before value / key was not present.
+     *
+     * @return bool
+     */
+    public function didNotExistBefore()
+    {
+        return $this->beforeDoesNotExist;
+    }
+
+    /**
+     * Returns whether the before value / key was not present.
+     *
+     * @return bool
+     */
+    public function didNotExistAfter()
+    {
+        return $this->afterDoesNotExist;
+    }
+
+    /**
      * @param mixed $before
      * @return $this
      */

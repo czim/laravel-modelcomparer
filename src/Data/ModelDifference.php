@@ -72,6 +72,22 @@ class ModelDifference implements Arrayable, Jsonable
     }
 
     /**
+     * @return AttributeDifference[]|DifferenceCollection
+     */
+    public function attributes()
+    {
+        return $this->attributes;
+    }
+
+    /**
+     * @return AbstractRelationDifference[]|DifferenceCollection
+     */
+    public function relations()
+    {
+        return $this->relations;
+    }
+
+    /**
      * Get the instance as an array.
      *
      * @return array

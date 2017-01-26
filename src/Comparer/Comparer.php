@@ -5,14 +5,19 @@ use Czim\ModelComparer\Data\AbstractRelationDifference;
 use Czim\ModelComparer\Data\AttributeDifference;
 use Czim\ModelComparer\Data\DifferenceCollection;
 use Czim\ModelComparer\Data\ModelDifference;
+use Czim\ModelComparer\Data\PluralRelationDifference;
 use Czim\ModelComparer\Data\RelatedAddedDifference;
+use Czim\ModelComparer\Data\RelatedChangedDifference;
 use Czim\ModelComparer\Data\RelatedRemovedDifference;
+use Czim\ModelComparer\Data\RelatedReplacedDifference;
 use Czim\ModelComparer\Data\SingleRelationDifference;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphPivot;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use RuntimeException;
@@ -155,7 +160,7 @@ class Comparer
 
         $after = $this->buildNormalizedArrayTree($model);
 
-        $difference = $this->buildDifferenceTree($model, $this->before, $after);
+        $difference = $this->buildDifferenceTree(get_class($model), $this->before, $after);
 
         return $difference;
     }
@@ -170,13 +175,21 @@ class Comparer
     protected function buildNormalizedArrayTree(Model $model, $parent = null)
     {
         // Analyze relations, build nested tree
-        $relationKeys = array_keys($model->relationsToArray());
+        $relationKeys = array_keys($model->getRelations());
         $relationTree = [];
 
         // Keep a list of foreign keys for BelongsTo, MorphTo relations
         $localForeignKeys = [];
 
         foreach ($relationKeys as $relationKey) {
+
+            if (    $relationKey == 'pivot'
+                &&  (   array_get($model->getRelations(), 'pivot') instanceof Pivot
+                    ||  array_get($model->getRelations(), 'pivot') instanceof MorphPivot
+                    )
+            ) {
+                continue;
+            }
 
             /** @var Relation $relationInstance */
             $relationName     = camel_case($relationKey);
@@ -226,6 +239,9 @@ class Comparer
                     continue;
                 }
 
+                // todo
+                // get pivot/morphpivot data
+
                 $items[ $key ] = $this->buildNormalizedArrayTree($childModel, $nestedParent);
             }
 
@@ -253,6 +269,7 @@ class Comparer
         }
 
         return [
+            'class'      => get_class($model),
             'attributes' => $attributes,
             'relations'  => $relationTree,
         ];
@@ -284,12 +301,12 @@ class Comparer
     /**
      * Returns the difference object tree for a the model
      *
-     * @param Model $model
-     * @param array $before
-     * @param array $after
+     * @param string $modelClass
+     * @param array  $before
+     * @param array  $after
      * @return ModelDifference
      */
-    protected function buildDifferenceTree(Model $model, array $before, array $after)
+    protected function buildDifferenceTree($modelClass, array $before, array $after)
     {
         // Check attributes
         // Filter out foreign key attributes
@@ -307,7 +324,7 @@ class Comparer
             array_get($after, 'relations', [])
         );
 
-        return new ModelDifference(get_class($model), $attributeDiff, $relationDiff);
+        return new ModelDifference($modelClass, $attributeDiff, $relationDiff);
     }
 
     /**
@@ -408,34 +425,62 @@ class Comparer
             if ( ! count($beforeItems) && ! count($afterItems)) {
                 // Nothing changed, still unconnected
                 return false;
+            }
 
-            } elseif ( ! count($beforeItems)) {
+            if ( ! count($beforeItems)) {
 
-                $key       = head(array_keys($afterItems));
-                $class     = null;
-
-                if ($morph) {
-                    list($key, $class) = explode(':', $key, 2);
-                }
+                $key = head(array_keys($afterItems));
+                list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
                 $difference = new RelatedAddedDifference($key, $class);
 
             } elseif ( ! count($afterItems)) {
 
-                $key   = head(array_keys($beforeItems));
-                $class = null;
-
-                if ($morph) {
-                    list($key, $class) = explode(':', $key, 2);
-                }
+                $key = head(array_keys($beforeItems));
+                list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
                 $difference = new RelatedRemovedDifference($key, $class);
 
             } else {
 
-                // See if the connection was changed
-                // or if not, whether the related model was changed
-                return false;
+                $keyBefore = head(array_keys($beforeItems));
+                $keyAfter  = head(array_keys($afterItems));
+
+                if ($keyBefore === $keyAfter) {
+                    // The same model is still related, but it may be altered
+                    $modelClass = $afterItems[ $keyAfter ]['class'];
+
+                    $difference = $this->buildDifferenceTree(
+                        $modelClass,
+                        $beforeItems[ $keyBefore ],
+                        $afterItems[ $keyAfter ]
+                    );
+
+                    if ( ! $difference->isDifferent()) {
+                        return false;
+                    }
+
+                    list($keyOnlyBefore, $classBefore) = $this->getKeyAndClassFromReference($keyBefore, $morph);
+
+                    $difference = new RelatedChangedDifference($keyOnlyBefore, $classBefore, $difference);
+
+                } else {
+                    // The model related before was replaced by another
+                    list($keyOnlyBefore, $classBefore) = $this->getKeyAndClassFromReference($keyBefore, $morph);
+                    list($keyOnlyAfter, $classAfter)   = $this->getKeyAndClassFromReference($keyAfter, $morph);
+
+                    $difference = new RelatedReplacedDifference(
+                        $keyOnlyAfter,
+                        $classAfter,
+                        new ModelDifference(
+                            $classAfter ?: $afterItems[ $keyAfter ]['class'],
+                            new DifferenceCollection,
+                            new DifferenceCollection
+                        ),
+                        $keyOnlyBefore,
+                        $classBefore
+                    );
+                }
             }
 
             return new SingleRelationDifference($method, $type, $difference);
@@ -443,9 +488,65 @@ class Comparer
 
         // Plural relations
 
-        // todo: list removed, added and changed
-        
-        return false;
+        $differences = new DifferenceCollection;
+
+        if ( ! count($beforeItems) && ! count($afterItems)) {
+            // Nothing changed, still 0 connections
+            return false;
+        }
+
+        // Find relations that are no longer present
+        $removedKeys = array_diff(array_keys($beforeItems), array_keys($afterItems));
+        foreach ($removedKeys as $key) {
+
+            list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
+
+            $differences->put($key, new RelatedRemovedDifference($keyOnly, $class));
+        }
+
+        // Find relations that are newly present
+        $addedKeys = array_diff(array_keys($afterItems), array_keys($beforeItems));
+        foreach ($addedKeys as $key) {
+
+            list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
+
+            $differences->put($key, new RelatedAddedDifference($keyOnly, $class));
+        }
+
+        // Check for changes on previously related models
+        $relatedKeys = array_intersect(array_keys($beforeItems), array_keys($afterItems));
+        foreach ($relatedKeys as $key) {
+
+            $modelClass = $beforeItems[$key]['class'];
+
+            $difference = $this->buildDifferenceTree($modelClass, $beforeItems[$key], $afterItems[$key]);
+
+            if ($difference->isDifferent()) {
+
+                list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
+
+                $differences->put($key, new RelatedChangedDifference($keyOnly, $class, $difference));
+            }
+        }
+
+        return new PluralRelationDifference($method, $type, $differences);
+    }
+
+
+    /**
+     * @param string $key
+     * @param bool   $morph
+     * @return array    key, model class
+     */
+    protected function getKeyAndClassFromReference($key, $morph = false)
+    {
+        $class = null;
+
+        if ( ! $morph) {
+            return [ $key, $class ];
+        }
+
+        return explode(':', $key, 2);
     }
 
     /**

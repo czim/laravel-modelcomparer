@@ -77,13 +77,45 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
      *
      * @return string|null
      */
-    public function getModelClass()
+    public function modelClass()
     {
         if ($this->isVariableModelClass) {
             return null;
         }
 
         return $this->modelClass;
+    }
+
+    /**
+     * @return string
+     */
+    public function method()
+    {
+        return $this->method;
+    }
+
+    /**
+     * @return string
+     */
+    public function type()
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isPlural()
+    {
+        return $this->plural;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasVariableModelClass()
+    {
+        return $this->isVariableModelClass;
     }
 
     /**

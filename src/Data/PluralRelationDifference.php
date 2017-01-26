@@ -1,6 +1,9 @@
 <?php
 namespace Czim\ModelComparer\Data;
 
+use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
+use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
+
 /**
  * Class PluralRelationDifference
  *
@@ -17,7 +20,7 @@ class PluralRelationDifference extends AbstractRelationDifference
      *      RelatedRemovedDifference
      *      RelatedChangedDifference
      *
-     * @var DifferenceCollection
+     * @var DifferenceCollection|DifferenceNodeInterface[]|DifferenceLeafInterface[]
      */
     protected $related;
 
@@ -34,13 +37,41 @@ class PluralRelationDifference extends AbstractRelationDifference
     }
 
     /**
+     * @return DifferenceCollection|DifferenceLeafInterface[]|DifferenceNodeInterface[]
+     */
+    public function related()
+    {
+        return $this->related;
+    }
+
+    /**
      * Get the instance as an array.
      *
      * @return array
      */
     public function toArray()
     {
-        return $this->related->toArray();
+        $difference = [];
+
+        if ($this->hasMessage()) {
+            $difference['relation'] = $this->getMessage();
+        }
+
+        if (count($this->related)) {
+            $difference['related'] = [];
+
+            foreach ($this->related as $key => $related) {
+
+                if ($related instanceof DifferenceLeafInterface) {
+                    $difference['related'][] = (string) $related;
+                    continue;
+                }
+
+                $difference['related'][] = $related->toArray();
+            }
+        }
+
+        return $difference;
     }
 
 }
