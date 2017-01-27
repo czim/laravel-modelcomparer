@@ -454,8 +454,203 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
+    function it_compares_a_model_with_changed_belongs_to_many_connections()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+
+        /** @var TestModel $model */
+        $model = TestModel::first();
+
+        $model->testRelatedAlphas()->sync([1, 2]);
+        $model->load('testRelatedAlphas');
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setBeforeState($model);
+
+
+        $model->testRelatedAlphas()->sync([2, 3]);
+        TestRelatedAlpha::find(2)->update([ 'name' => 'Changed Alpha Name' ]);
+        $model = $model->fresh()->load('testRelatedAlphas');
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertTrue($difference->isDifferent());
+        $this->assertCount(0, $difference->attributes(), "There should be no attribute changes");
+        $this->assertCount(1, $difference->relations(), "There should be 1 relation change");
+        $this->assertTrue($difference->relations()->has('testRelatedAlphas'));
+        $this->assertInstanceOf(PluralRelationDifference::class, $relation = $difference->relations()['testRelatedAlphas']);
+        $this->assertCount(3, $relation->related(), "There should be 3 related differences");
+
+        $this->assertTrue($relation->related()->has(1));
+        $this->assertInstanceOf(RelatedRemovedDifference::class, $object = $relation->related()->get(1));
+        /** @var RelatedRemovedDifference $object */
+        $this->assertEquals(1, $object->getKey(), "Related removed key does not match");
+        $this->assertNull($object->getClass(), "Related removed class does not match");
+
+        $this->assertTrue($relation->related()->has(3));
+        $this->assertInstanceOf(RelatedAddedDifference::class, $object = $relation->related()->get(3));
+        /** @var RelatedAddedDifference $object */
+        $this->assertEquals(3, $object->getKey(), "Related added key does not match");
+        $this->assertNull($object->getClass(), "Related added class does not match");
+        $this->assertTrue($object->hasMessage(), "Related added should have a message");
+        $this->assertRegExp('/#3/', $object->getMessage(), "Related added getMessage() is not as expected");
+
+        $this->assertTrue($relation->related()->has(2));
+        $this->assertInstanceOf(RelatedChangedDifference::class, $object = $relation->related()->get(2));
+        /** @var RelatedChangedDifference $object */
+        $this->assertEquals(2, $object->getKey(), "Related changed key does not match");
+        $this->assertNull($object->getClass(), "Related changed class does not match");
+        $this->assertFalse($object->hasMessage(), "Related changed should not have a message");
+        $this->assertInstanceOf(ModelDifference::class, $object = $object->difference());
+        /** @var ModelDifference $object */
+        $this->assertTrue($object->isDifferent(), "Changed model should report different");
+        $this->assertCount(1, $object->attributes(), "There should be 1 attribute change");
+        $this->assertCount(0, $object->relations(), "There should be no relation changes");
+    }
+
+    /**
+     * @test
+     */
+    function it_compares_a_model_with_changed_pivot_attributes_for_unchanged_belongs_to_many_connection()
     {
 
+    }
+
+    // ------------------------------------------------------------------------------
+    //      Ignored & 'not real' changes
+    // ------------------------------------------------------------------------------
+
+
+    /**
+     * @test
+     */
+    function it_ignores_timestamp_changes_by_default()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setBeforeState($model);
+
+        $model->created_at = $model->created_at->addDay();
+        $model->updated_at = $model->updated_at->subDay();
+        $model->save();
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertInstanceOf(ModelDifference::class, $difference);
+        $this->assertCount(0, $difference->attributes(), "There should be no attribute changes");
+    }
+    
+    /**
+     * @test
+     */
+    function it_tracks_timestamp_changes_if_configured_to()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->ignoreTimestamps(false);
+        $comparer->setBeforeState($model);
+
+        $model->created_at = $model->created_at->addDay();
+        $model->updated_at = $model->updated_at->subDay();
+        $model->save();
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertInstanceOf(ModelDifference::class, $difference);
+        $this->assertCount(2, $difference->attributes(), "There should be no attribute changes");
+        $this->assertTrue($difference->attributes()->has('updated_at'));
+        $this->assertTrue($difference->attributes()->has('created_at'));
+    }
+
+    /**
+     * @test
+     */
+    function it_ignores_changes_that_are_detected_on_loosy_comparison_by_default()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+        $model->float = 0.0;
+        $model->integer = 0;
+
+        // Test
+        $comparer = new Comparer();
+        //$comparer->useStrictComparison(true);
+        $comparer->setBeforeState($model);
+
+        $model->float = null;
+        $model->integer = null;
+        $model->save();
+
+        $difference = $comparer->compareWithBefore($model);
+
+        $realChanges = $difference->attributes()->filter(function (AttributeDifference $diff) {
+            return ! $diff->isIgnored();
+        });
+
+        // Assert
+        $this->assertInstanceOf(ModelDifference::class, $difference);
+        $this->assertCount(0, $realChanges, "There should be no unignored attribute changes");
+    }
+
+    /**
+     * @test
+     */
+    function it_tracks_changes_that_are_detected_on_loosy_comparison_if_configured_to()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+        $model->float = 0.0;
+        $model->integer = 0;
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->useStrictComparison(true);
+        $comparer->setBeforeState($model);
+
+        $model->float = null;
+        $model->integer = null;
+        $model->save();
+
+        $difference = $comparer->compareWithBefore($model);
+
+        $realChanges = $difference->attributes()->filter(function (AttributeDifference $diff) {
+            return ! $diff->isIgnored();
+        });
+
+        // Assert
+        $this->assertInstanceOf(ModelDifference::class, $difference);
+        $this->assertCount(2, $realChanges, "There should be 2 unignored attribute changes");
+    }
+
+
+    // ------------------------------------------------------------------------------
+    //      Special cases
+    // ------------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    function it_compares_a_model_with_an_unchanged_relation_with_changes_to_the_related_model_of_related_model()
+    {
     }
 
 
