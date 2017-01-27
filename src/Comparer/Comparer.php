@@ -594,7 +594,11 @@ class Comparer
      */
     protected function isChangeToBeIgnored($before, $after)
     {
-        return null === $this->isValueEqual($before, $after);
+        if ($this->loosyValueComparison) {
+            return null === $this->isValueEqual($before, $after);
+        }
+
+        return false;
     }
 
     /**
@@ -606,7 +610,7 @@ class Comparer
      */
     protected function isRealChange($before, $after)
     {
-        return ! $this->isValueEqual($before, $after);
+        return true === $this->isValueEqual($before, $after);
     }
 
     /**
