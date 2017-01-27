@@ -73,9 +73,37 @@ class Comparer
      */
     protected $ignoreTimestamps = true;
 
-    
+
+    // ------------------------------------------------------------------------------
+    //      Configuration
+    // ------------------------------------------------------------------------------
+
+    /**
+     * @param bool $ignore
+     * @return $this
+     */
+    public function ignoreTimestamps($ignore = true)
+    {
+        $this->ignoreTimestamps = (bool) $ignore;
+
+        return $this;
+    }
+
+    /**
+     * @param bool $strict
+     * @return $this
+     */
+    public function useStrictComparison($strict = true)
+    {
+        $this->loosyValueComparison = ! $strict;
+
+        return $this;
+    }
+
     /**
      * Sets comparisons to always be completed in full.
+     *
+     * @return $this
      */
     public function alwaysCompareFully()
     {
@@ -91,11 +119,19 @@ class Comparer
      *      [ article.transations, article.articleSorts.translations ]
      *
      * @param array $compareFully
+     * @return $this
      */
     public function setNestedCompareRelations(array $compareFully)
     {
         $this->nestedCompareFully = $compareFully;
+
+        return $this;
     }
+
+    // ------------------------------------------------------------------------------
+    //      Comparison
+    // ------------------------------------------------------------------------------
+
 
     /**
      * Sets the before state to be compared with an after state later.
@@ -140,6 +176,8 @@ class Comparer
 
         return $difference;
     }
+
+
 
     /**
      * Builds a normalized tree that is ready for comparison-usage.
