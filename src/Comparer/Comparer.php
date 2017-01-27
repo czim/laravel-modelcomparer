@@ -29,22 +29,6 @@ use RuntimeException;
  * depending on the (eager) loaded relation tree. This helps generate
  * clean and non-redundant changelogs for model updates.
  *
- * @todo
- *  Ideally you would get the keys that were altered and there before/after
- *  state: 'model.relation.attribute' => [ 'before' => X, 'after' => Y ]
- *
- *  This could include logic like: a before but no after = deleted, or
- *  the reverse = created.
- *
- *  This should be within the scope of a (related) model for updated
- *  models that already existed:
- *      model => relation => first related item => [ attributeA => [ before, after ], etc ]
- *
- *  Also, consider whether flattened would be better:
- *      model.relation.0.attributeA => [ before, after ]
- *  A bonus for this: it would be easy to make 'keys to ignore' list with wildcards,
- *  Then filter the difference array (by key) for these.
- *
  */
 class Comparer
 {
@@ -89,15 +73,7 @@ class Comparer
      */
     protected $ignoreTimestamps = true;
 
-
-    // todo:
-    //[
-    //    'translations',
-    //    'articleSorts',
-    //    'articleSorts.translations',
-    //    // anything not in here gets compared by link/id only
-    //];
-
+    
     /**
      * Sets comparisons to always be completed in full.
      */
