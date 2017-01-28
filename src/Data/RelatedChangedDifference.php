@@ -37,17 +37,26 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      */
     protected $difference;
 
+    /**
+     * Difference for pivot attributes
+     *
+     * @var false|PivotDifference
+     */
+    protected $pivotDifference;
+
 
     /**
      * @param mixed|false     $key false if the model was not related before.
      * @param string|null     $class
      * @param ModelDifference $difference
+     * @param PivotDifference $pivotDifference
      */
-    public function __construct($key, $class, ModelDifference $difference)
+    public function __construct($key, $class, ModelDifference $difference, PivotDifference $pivotDifference = null)
     {
-        $this->key        = $key;
-        $this->class      = $class;
-        $this->difference = $difference;
+        $this->key             = $key;
+        $this->class           = $class;
+        $this->difference      = $difference;
+        $this->pivotDifference = $pivotDifference ?: false;
     }
 
     /**
@@ -78,6 +87,30 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
     public function difference()
     {
         return $this->difference;
+    }
+
+    /**
+     * Returns whether this difference data is for a pivot related model.
+     *
+     * @return bool
+     */
+    public function isPivotRelated()
+    {
+        return !! $this->pivotDifference;
+    }
+
+    /**
+     * Returns differences for pivot attributes, or false if this is not a pivot relation.
+     *
+     * @return false|PivotDifference
+     */
+    public function pivotDifference()
+    {
+        if ( ! $this->pivotDifference) {
+            return false;
+        }
+
+        return $this->pivotDifference;
     }
 
     /**

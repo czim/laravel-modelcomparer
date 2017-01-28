@@ -4,7 +4,6 @@ namespace Czim\ModelComparer\Data;
 use Czim\ModelComparer\Traits\ToArrayJsonable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
-use Illuminate\Support\Collection;
 
 /**
  * Class RelationDifference
@@ -63,12 +62,7 @@ class ModelDifference implements Arrayable, Jsonable
      */
     public function isDifferent()
     {
-        return count($this->attributes->filter(
-                    function (AttributeDifference $difference) {
-                        return ! $difference->isIgnored();
-                    }
-                )) > 0
-            || count($this->relations) > 0;
+        return count($this->attributes) > 0 || count($this->relations) > 0;
     }
 
     /**
@@ -96,13 +90,12 @@ class ModelDifference implements Arrayable, Jsonable
     {
         $difference = [];
 
-        $attributes = $this->attributeDifferences();
-        if (count($attributes)) {
+        if (count($this->attributes)) {
             $difference['attributes'] = array_map(
                 function (AttributeDifference $item) {
                     return (string) $item;
                 },
-                $attributes->toArray()
+                $this->attributes->toArray()
             );
         }
 
@@ -111,18 +104,6 @@ class ModelDifference implements Arrayable, Jsonable
         }
 
         return $difference;
-    }
-
-    /**
-     * @return Collection|AttributeDifference[]
-     */
-    protected function attributeDifferences()
-    {
-        return $this->attributes->filter(
-            function (AttributeDifference $difference) {
-                return ! $difference->isIgnored();
-            }
-        );
     }
 
 }

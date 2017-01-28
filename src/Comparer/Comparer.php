@@ -5,6 +5,7 @@ use Czim\ModelComparer\Data\AbstractRelationDifference;
 use Czim\ModelComparer\Data\AttributeDifference;
 use Czim\ModelComparer\Data\DifferenceCollection;
 use Czim\ModelComparer\Data\ModelDifference;
+use Czim\ModelComparer\Data\PivotDifference;
 use Czim\ModelComparer\Data\PluralRelationDifference;
 use Czim\ModelComparer\Data\RelatedAddedDifference;
 use Czim\ModelComparer\Data\RelatedChangedDifference;
@@ -13,10 +14,12 @@ use Czim\ModelComparer\Data\RelatedReplacedDifference;
 use Czim\ModelComparer\Data\SingleRelationDifference;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\MorphPivot;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
@@ -191,6 +194,7 @@ class Comparer
         // Analyze relations, build nested tree
         $relationKeys = array_keys($model->getRelations());
         $relationTree = [];
+        $pivot = [];
 
         // Keep a list of foreign keys for BelongsTo, MorphTo relations
         $localForeignKeys = [];
@@ -198,10 +202,31 @@ class Comparer
         foreach ($relationKeys as $relationKey) {
 
             if (    $relationKey == 'pivot'
-                &&  (   array_get($model->getRelations(), 'pivot') instanceof Pivot
-                    ||  array_get($model->getRelations(), 'pivot') instanceof MorphPivot
+                &&  (   ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof Pivot
+                    ||  ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof MorphPivot
                     )
             ) {
+                /** @var MorphPivot $pivotObject */
+                // todo: get morph type keys
+
+                /** @var Pivot $pivotObject */
+                $pivotKeys = array_filter([
+                    $pivotObject->getKey(),
+                    $pivotObject->getOtherKey(),
+                    $pivotObject->getForeignKey(),
+                ]);
+
+                if ($pivotObject->hasTimestampAttributes()) {
+                    $pivotKeys[] = $pivotObject->getCreatedAtColumn();
+                    $pivotKeys[] = $pivotObject->getUpdatedAtColumn();
+                }
+
+                $pivotAttributes = array_except($pivotObject->attributesToArray(), $pivotKeys);
+
+                if (count($pivotAttributes)) {
+                    $pivot = $pivotAttributes;
+                }
+
                 continue;
             }
 
@@ -212,6 +237,7 @@ class Comparer
 
             $isSingle = $this->isSingleRelation($relationInstance);
             $isMorph  = $this->isMorphTo($relationInstance);
+            $hasPivot = $this->hasPivotTable($relationInstance);
 
             $foreignKeys = [];
 
@@ -253,9 +279,6 @@ class Comparer
                     continue;
                 }
 
-                // todo
-                // get pivot/morphpivot data
-
                 $items[ $key ] = $this->buildNormalizedArrayTree($childModel, $nestedParent);
             }
 
@@ -266,24 +289,25 @@ class Comparer
                 'type'         => get_class($relationInstance),
                 'single'       => $isSingle,
                 'morph'        => $isMorph,
+                'pivot'        => $hasPivot,
                 'items'        => $items,
                 'foreign_keys' => $foreignKeys,
             ];
-
-            // todo: list pivot attributes
-            // ignoring timestamps if configured
         }
 
         // Handle attributes of this model itself
-        $attributes = array_except($model->attributesToArray(), $localForeignKeys);
+        $ignoreKeys = $localForeignKeys;
 
-        // todo: filter configured ignored keys
         if ($this->ignoreTimestamps && $model->timestamps) {
-            $attributes = array_except($attributes, [ $model::CREATED_AT, $model::UPDATED_AT ]);
+            $ignoreKeys[] = $model->getCreatedAtColumn();
+            $ignoreKeys[] = $model->getUpdatedAtColumn();
         }
+
+        $attributes = array_except($model->attributesToArray(), $ignoreKeys);
 
         return [
             'class'      => get_class($model),
+            'pivot'      => $pivot,
             'attributes' => $attributes,
             'relations'  => $relationTree,
         ];
@@ -311,6 +335,15 @@ class Comparer
         return $relation instanceof MorphTo;
     }
 
+    /**
+     * @param Relation $relation
+     * @return bool
+     */
+    protected function hasPivotTable(Relation $relation)
+    {
+        return  $relation instanceof BelongsToMany
+            ||  $relation instanceof MorphToMany;
+    }
 
     /**
      * Returns the difference object tree for a the model
@@ -359,8 +392,8 @@ class Comparer
             }
 
             // If the key does exist, check if the value is difference
-            if ( ! $this->isValueEqual($value, $after[ $key ])) {
-                $differences->put($key, $this->getAttributeDifference($value, $after[ $key ]));
+            if ( ! $this->isAttributeValueEqual($value, $after[ $key ])) {
+                $differences->put($key, new AttributeDifference($value, $after[ $key ]));
             }
         }
 
@@ -401,23 +434,6 @@ class Comparer
     }
 
     /**
-     * Returns an attribute difference object for a changed attribute value.
-     *
-     * @param mixed $before
-     * @param mixed $after
-     * @return AttributeDifference
-     */
-    protected function getAttributeDifference($before, $after)
-    {
-        $diff = new AttributeDifference($before, $after);
-
-        $diff->setIgnored($this->isChangeToBeIgnored($before, $after));
-        $diff->setRealChange($this->isRealChange($before, $after));
-
-        return $diff;
-    }
-
-    /**
      * Returns a relation difference object for potentially changed relation data.
      *
      * @param array  $before
@@ -430,6 +446,7 @@ class Comparer
         $type   = array_get($before, 'type');
         $single = array_get($before, 'single', true);
         $morph  = array_get($before, 'morph', true);
+        $pivot  = array_get($before, 'pivot', false);
 
         $beforeItems = array_get($before, 'items', []);
         $afterItems  = array_get($after, 'items', []);
@@ -533,13 +550,21 @@ class Comparer
 
             $modelClass = $beforeItems[$key]['class'];
 
-            $difference = $this->buildDifferenceTree($modelClass, $beforeItems[$key], $afterItems[$key]);
+            $difference      = $this->buildDifferenceTree($modelClass, $beforeItems[$key], $afterItems[$key]);
+            $pivotDifference = null;
 
-            if ($difference->isDifferent()) {
+            // For pivot-based relations, check the pivot differences
+            if ($pivot) {
+                $pivotDifference = new PivotDifference(
+                    $this->buildAttributesDifferenceList($beforeItems[$key]['pivot'], $afterItems[$key]['pivot'])
+                );
+            }
+
+            if ($difference->isDifferent() || $pivotDifference && $pivotDifference->isDifferent()) {
 
                 list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-                $differences->put($key, new RelatedChangedDifference($keyOnly, $class, $difference));
+                $differences->put($key, new RelatedChangedDifference($keyOnly, $class, $difference, $pivotDifference));
             }
         }
 
@@ -570,47 +595,20 @@ class Comparer
      * @param mixed $after
      * @return true|false|null  null if the difference is only loose.
      */
-    protected function isValueEqual($before, $after)
+    protected function isAttributeValueEqual($before, $after)
     {
         // todo: do array and special object comparison
+        // todo: strategy-based comparison, only count real & unignored changes
 
         if ($before === $after) {
             return true;
         }
 
-        if ($before == $after) {
-            return null;
+        if ($this->loosyValueComparison && $before == $after) {
+            return true;
         }
 
         return false;
-    }
-
-    /**
-     * Returns whether the change between two values should be ignored for the difference tree.
-     *
-     * @param mixed $before
-     * @param mixed $after
-     * @return bool
-     */
-    protected function isChangeToBeIgnored($before, $after)
-    {
-        if ($this->loosyValueComparison) {
-            return null === $this->isValueEqual($before, $after);
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns whether the change is a 'real' change.
-     *
-     * @param mixed $before
-     * @param mixed $after
-     * @return bool
-     */
-    protected function isRealChange($before, $after)
-    {
-        return true === $this->isValueEqual($before, $after);
     }
 
     /**

@@ -43,22 +43,6 @@ class AttributeDifference implements DifferenceLeafInterface
      */
     protected $afterDoesNotExist = false;
 
-    /**
-     * Whether this change is considered a 'real' one.
-     *
-     * (f.i.: not 0 to 0.0, or 0 to false).
-     *
-     * @var bool
-     */
-    protected $isRealChange = false;
-
-    /**
-     * Whether this change should be ignored according to configuration settings.
-     *
-     * @var bool
-     */
-    protected $isIgnored = false;
-
 
     /**
      * @param mixed $before
@@ -139,52 +123,6 @@ class AttributeDifference implements DifferenceLeafInterface
         $this->after = $after;
 
         return $this;
-    }
-
-    /**
-     * Set whether this change is considered a 'real' change.
-     *
-     * @param bool $value
-     * @return $this
-     */
-    public function setRealChange($value = true)
-    {
-        $this->isRealChange = (bool) $value;
-
-        return $this;
-    }
-
-    /**
-     * Returns whether this change is considered a 'real' change.
-     *
-     * @return bool
-     */
-    public function isRealChange()
-    {
-        return $this->isRealChange;
-    }
-
-    /**
-     * Set whether this change is deliberately ignored.
-     *
-     * @param bool $value
-     * @return $this
-     */
-    public function setIgnored($value = true)
-    {
-        $this->isIgnored = (bool) $value;
-
-        return $this;
-    }
-
-    /**
-     * Returns whether this change is marked deliberatly ignored.
-     *
-     * @return bool
-     */
-    public function isIgnored()
-    {
-        return $this->isIgnored;
     }
 
     /**
