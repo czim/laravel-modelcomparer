@@ -5,9 +5,6 @@ use Illuminate\Support\Facades\Schema;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
-    const TABLE_NAME_SIMPLE  = 'test_models';
-    const TABLE_NAME_RELATED = 'test_related_models';
-
 
     /**
      * Define environment setup.
@@ -37,7 +34,7 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
 
     protected function migrateDatabase()
     {
-        Schema::create(self::TABLE_NAME_SIMPLE, function($table) {
+        Schema::create('test_models', function($table) {
             $table->increments('id');
             $table->string('name', 255)->nullable();
             $table->integer('integer')->unsigned()->nullable();
@@ -48,7 +45,7 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
             $table->timestamps();
         });
 
-        Schema::create(self::TABLE_NAME_RELATED, function($table) {
+        Schema::create('test_related_models', function($table) {
             $table->increments('id');
             $table->string('name', 255)->nullable();
             $table->timestamps();

@@ -155,8 +155,6 @@ class ComparerTest extends TestCase
 
         // Assert
         $this->assertInstanceOf(ModelDifference::class, $difference);
-
-        $this->assertInstanceOf(ModelDifference::class, $difference);
         $this->assertCount(2, $difference->attributes(), "There should be 2 attribute changes");
         $this->assertCount(1, $difference->relations(), "There should be 1 relation change");
         $this->assertTrue($difference->attributes()->has('integer'));
@@ -667,6 +665,7 @@ class ComparerTest extends TestCase
 
     }
 
+
     // ------------------------------------------------------------------------------
     //      Ignored & 'not real' changes
     // ------------------------------------------------------------------------------
@@ -788,8 +787,122 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_an_unchanged_relation_with_changes_to_the_related_model_of_related_model()
+    function it_compares_a_complex_of_deeply_changed_related_models()
     {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+        $model->testRelatedAlphas()->sync([1, 2]);
+        TestRelatedAlpha::find(1)->testRelatedBetas()->sync([2]);
+        TestRelatedAlpha::find(2)->testRelatedBetas()->sync([1, 3 => [ 'position' => 1 ]]);
+        $model->load('testRelatedModel');
+        $model->load('testRelatedAlphas.testRelatedBetas');
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setBeforeState($model);
+
+        $model->boolean = true;
+
+        TestRelatedModel::find(1)->update(['name' => 'Changed!']);
+        TestRelatedAlpha::find(1)->testRelatedBetas()->sync([1]);
+        TestRelatedAlpha::find(2)->testRelatedBetas()->sync([
+            1,
+            3 => [ 'position' => 2, 'date' => Carbon::create(2017, 1, 1, 0, 0, 0)]
+        ]);
+        TestRelatedBeta::find(1)->update(['name' => 'Changed Beta!']);
+
+        $model->load('testRelatedModel');
+        $model->load('testRelatedAlphas.testRelatedBetas');
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertInstanceOf(ModelDifference::class, $difference);
+        $this->assertCount(1, $difference->attributes(), "There should be 1 attribute change");
+        $this->assertCount(2, $difference->relations(), "There should be 2 relation changes");
+
+        /** @var AttributeDifference $object */
+        $this->assertTrue($difference->attributes()->has('boolean'));
+        $this->assertInstanceOf(AttributeDifference::class, $object = $difference->attributes()->get('boolean'));
+        $this->assertEquals(false, $object->before(), "Change value (before) incorrect");
+        $this->assertEquals(true, $object->after(), "Change value (after) incorrect");
+
+        // TestRelatedModel
+        /** @var SingleRelationDifference $object */
+        $this->assertTrue($difference->relations()->has('testRelatedModel'));
+        $this->assertInstanceOf(SingleRelationDifference::class, $object = $difference->relations()->get('testRelatedModel'));
+        $this->assertInstanceOf(RelatedChangedDifference::class, $object = $object->difference());
+        /** @var RelatedChangedDifference $object */
+        $this->assertTrue($object->difference()->isDifferent(), "TestRelatedModel should be marked different");
+        $this->assertCount(1, $object->difference()->attributes(), "TestRelatedModel should have 1 changed attribute");
+        $this->assertTrue($object->difference()->attributes()->has('name'), "TestRelatedModel should have changed 'name' attribute");
+
+        /** @var PluralRelationDifference $object */
+        $this->assertTrue($difference->relations()->has('testRelatedAlphas'));
+        $this->assertInstanceOf(PluralRelationDifference::class, $object = $difference->relations()->get('testRelatedAlphas'));
+        $this->assertCount(2, $object->related(), "testRelatedAlphas should have 2 related changes");
+
+        // TestRelatedAlphas
+        $this->assertTrue($object->related()->has(1), "testRelatedAlphas key 1 should be present");
+        $this->assertTrue($object->related()->has(2), "testRelatedAlphas key 2 should be present");
+        $first  = $object->related()->get(1);
+        $second = $object->related()->get(2);
+
+        // TestRelatedAlpha: 1
+        $this->assertInstanceOf(RelatedChangedDifference::class, $first);
+        /** @var RelatedChangedDifference $first */
+        $this->assertTrue($first->difference()->isDifferent());
+        $this->assertCount(0, $first->difference()->attributes());
+        $this->assertCount(1, $first->difference()->relations());
+        $this->assertTrue($first->difference()->relations()->has('testRelatedBetas'));
+
+        $this->assertTrue($first->difference()->relations()->get('testRelatedBetas')->related()->has(1));
+        $this->assertInstanceof(
+            RelatedAddedDifference::class,
+            $object = $first->difference()->relations()->get('testRelatedBetas')->related()->get(1)
+        );
+        /** @var RelatedAddedDifference $object */
+        $this->assertEquals($object->getKey(), 1);
+
+        $this->assertTrue($first->difference()->relations()->get('testRelatedBetas')->related()->has(2));
+        $this->assertInstanceof(
+            RelatedRemovedDifference::class,
+            $object = $first->difference()->relations()->get('testRelatedBetas')->related()->get(2)
+        );
+        /** @var RelatedRemovedDifference $object */
+        $this->assertEquals($object->getKey(), 2);
+
+        // TestRelatedAlpha: 2
+        $this->assertInstanceOf(RelatedChangedDifference::class, $second);
+        /** @var RelatedChangedDifference $second */
+        $this->assertTrue($second->difference()->isDifferent());
+
+        $this->assertTrue($second->difference()->relations()->get('testRelatedBetas')->related()->has(1));
+        $this->assertInstanceof(
+            RelatedChangedDifference::class,
+            $object = $second->difference()->relations()->get('testRelatedBetas')->related()->get(1)
+        );
+        /** @var RelatedChangedDifference $object */
+        $this->assertEquals($object->getKey(), 1);
+        $this->assertFalse($object->pivotDifference()->isDifferent());
+        $this->assertTrue($object->difference()->isDifferent());
+        $this->assertCount(1, $object->difference()->attributes());
+        $this->assertTrue($object->difference()->attributes()->has('name'));
+
+        $this->assertTrue($second->difference()->relations()->get('testRelatedBetas')->related()->has(3));
+        $this->assertInstanceof(
+            RelatedChangedDifference::class,
+            $object = $second->difference()->relations()->get('testRelatedBetas')->related()->get(3)
+        );
+        /** @var RelatedChangedDifference $object */
+        $this->assertEquals($object->getKey(), 3);
+        $this->assertFalse($object->difference()->isDifferent());
+        $this->assertTrue($object->pivotDifference()->isDifferent());
+        $this->assertCount(2, $object->pivotDifference()->attributes());
+        $this->assertTrue($object->pivotDifference()->attributes()->has('position'));
+        $this->assertTrue($object->pivotDifference()->attributes()->has('date'));
     }
 
 
