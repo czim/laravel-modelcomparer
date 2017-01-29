@@ -90,11 +90,15 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
      */
     public function toArray()
     {
+        $difference = [
+            'message' => $this->getMessage(),
+        ];
+
         if ($this->difference) {
-            return $this->difference->toArray();
+            $difference['related'] = $this->difference->toArray();
         }
 
-        return [];
+        return $difference;
     }
 
     /**

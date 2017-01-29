@@ -136,7 +136,17 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      */
     public function toArray()
     {
-        return $this->difference->toArray();
+        $difference = [];
+
+        if ($this->difference->isDifferent()) {
+            $difference['attributes'] = $this->difference->toArray();
+        }
+
+        if ($this->isPivotRelated() && $this->pivotDifference->attributes()->count()) {
+            $difference['pivot'] = $this->pivotDifference()->toArray();
+        }
+
+        return $difference;
     }
 
     /**

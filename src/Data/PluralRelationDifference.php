@@ -63,11 +63,11 @@ class PluralRelationDifference extends AbstractRelationDifference
             foreach ($this->related as $key => $related) {
 
                 if ($related instanceof DifferenceLeafInterface) {
-                    $difference['related'][] = (string) $related;
+                    $difference['related'][ $key ] = (string) $related;
                     continue;
                 }
 
-                $difference['related'][] = $related->toArray();
+                $difference['related'][ $key ] = $related->toArray();
             }
         }
 
