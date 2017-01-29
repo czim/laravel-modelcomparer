@@ -1,7 +1,7 @@
 <?php
 namespace Czim\ModelComparer\Comparer;
 
-use Czim\ModelComparer\Data\AbstractRelatedDifference;
+use Czim\ModelComparer\Contracts\ComparerInterface;
 use Czim\ModelComparer\Data\AbstractRelationDifference;
 use Czim\ModelComparer\Data\AttributeDifference;
 use Czim\ModelComparer\Data\DifferenceCollection;
@@ -34,7 +34,7 @@ use RuntimeException;
  * clean and non-redundant changelogs for model updates.
  *
  */
-class Comparer
+class Comparer implements ComparerInterface
 {
 
     /**
@@ -51,6 +51,9 @@ class Comparer
      * If an empty array, includes nothing fully.
      *
      * Anything not fully included will be compared by related key only (not changes in the child model(s)).
+     *
+     * Note that only (eager) loaded relations will be included.
+     * Make sure the model is provided to this class using with() or load() to include all required nested relations.
      *
      * @var string[]|false
      */
@@ -73,6 +76,7 @@ class Comparer
 
     /**
      * Whether changes to model timestamps should be ignored.
+     *
      * @var bool
      */
     protected $ignoreTimestamps = true;
@@ -83,6 +87,8 @@ class Comparer
     // ------------------------------------------------------------------------------
 
     /**
+     * Sets whether the comparer should ignore all timestamp attributes.
+     *
      * @param bool $ignore
      * @return $this
      */
@@ -94,6 +100,8 @@ class Comparer
     }
 
     /**
+     * Sets whether all comparison should be done strict.
+     *
      * @param bool $strict
      * @return $this
      */
