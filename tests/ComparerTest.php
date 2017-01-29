@@ -665,6 +665,59 @@ class ComparerTest extends TestCase
 
     }
 
+    // ------------------------------------------------------------------------------
+    //      Limit nested lookups
+    // ------------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    function it_can_be_configured_to_ignore_model_changes_for_models_of_specific_model_relations()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+        $model->testRelatedAlphas()->sync([1]);
+        $model->load(['testRelatedModel', 'testRelatedAlphas']);
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setNestedCompareRelations(['testRelatedModel']);
+        $comparer->setBeforeState($model);
+
+        TestRelatedModel::find(1)->update(['name' => 'Unignored changed name']);
+        TestRelatedAlpha::find(1)->update(['name' => 'Ignored changed name']);
+        $model->load(['testRelatedModel', 'testRelatedAlphas']);
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertCount(1, $difference->relations(), "Only 1 relation should be changed");
+        $this->assertTrue($difference->relations()->has('testRelatedModel'));
+
+        // Also test the reversed situation
+
+        /** @var TestModel $model */
+        $model->testRelatedAlphas()->sync([1]);
+        $model->load(['testRelatedModel', 'testRelatedAlphas']);
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setNestedCompareRelations(['testRelatedAlphas']);
+        $comparer->setBeforeState($model);
+
+        TestRelatedModel::find(1)->update(['name' => 'Ignored changed name']);
+        TestRelatedAlpha::find(1)->update(['name' => 'Unignored changed name']);
+        $model->load(['testRelatedModel', 'testRelatedAlphas']);
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertCount(1, $difference->relations(), "Only 1 relation should be changed");
+        $this->assertTrue($difference->relations()->has('testRelatedAlphas'));
+    }
+    
 
     // ------------------------------------------------------------------------------
     //      Ignored & 'not real' changes
