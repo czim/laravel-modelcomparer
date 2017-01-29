@@ -23,6 +23,12 @@ Via Composer
 $ composer require czim/laravel-modelcomparer
 ```
 
+In your `config/app.php` config, add the service provider
+
+``` php
+    Czim\ModelComparer\ModelComparerServiceProvider::class,
+```
+
 
 ## Usage 
 
@@ -36,12 +42,23 @@ The result is an comparison information object that stores all the changes and o
 
 ## To Do
 
-- Support for pivot attributes for belongs to many
+- Strategy setup for comparison
+
+- Add presenters that convert the object tree to a format
+    - messagebag?
+- Add tests for complicated nested cases and all relation types
+
 - Add singleton with facade for easy tracking of changes
     - would use the model's class & key to keep track of before states and allow setting after states
     - might even be done using an observer pattern
     - note: not recommended for long running processes, unless cleanup methods are used to keep memory load small
 
+- Better change tracking for related models
+    - Track before state index by model class & key in the comparer
+        - And, singleton should delegate this to currently active comparers
+    - Track changes of a model when it is still via-via related before AND after (but for a different intermediary relation)
+    - Allow manually 'loading in' before state for a to-be related model
+  
 
 ## Contributing
 
