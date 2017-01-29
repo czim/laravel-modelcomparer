@@ -1,6 +1,7 @@
 <?php
 namespace Czim\ModelComparer\Comparer;
 
+use Czim\ModelComparer\Data\AbstractRelatedDifference;
 use Czim\ModelComparer\Data\AbstractRelationDifference;
 use Czim\ModelComparer\Data\AttributeDifference;
 use Czim\ModelComparer\Data\DifferenceCollection;
@@ -348,13 +349,18 @@ class Comparer
     /**
      * Returns the difference object tree for a the model
      *
-     * @param string $modelClass
-     * @param array  $before
-     * @param array  $after
+     * @param string      $modelClass
+     * @param array|mixed $before       if not an array, model difference should not be tracked
+     * @param array|mixed $after        if not an array, model difference should not be tracked
      * @return ModelDifference
      */
-    protected function buildDifferenceTree($modelClass, array $before, array $after)
+    protected function buildDifferenceTree($modelClass, $before, $after)
     {
+        // If difference is ignored, don't build difference tree
+        if ( ! is_array($before) || ! is_array($after)) {
+            return new ModelDifference($modelClass, new DifferenceCollection, new DifferenceCollection);
+        }
+
         // Check attributes
         // Filter out foreign key attributes
         $localForeignKeys = $this->collectLocalForeignKeys($before)
@@ -375,6 +381,27 @@ class Comparer
     }
 
     /**
+     * Builds difference object for pivot record's attributes.
+     *
+     * @param array|mixed $before   if not an array, model difference should not be tracked
+     * @param array|mixed $after    if not an array, model difference should not be tracked
+     * @return PivotDifference
+     */
+    protected function buildPivotDifference($before, $after)
+    {
+        // If ignored, return empty difference
+        if ( ! is_array($before) || ! is_array($after)) {
+            return new PivotDifference(new DifferenceCollection);
+        }
+
+        return new PivotDifference(
+            $this->buildAttributesDifferenceList($before, $after)
+        );
+    }
+
+    /**
+     * Builds difference collection with attribute differences.
+     *
      * @param array $before
      * @param array $after
      * @return DifferenceCollection
@@ -406,6 +433,10 @@ class Comparer
     }
 
     /**
+     * Builds difference collection with relation differences.
+     *
+     * This may recursively create nested model difference objects.
+     *
      * @param array $before
      * @param array $after
      * @return DifferenceCollection
@@ -555,9 +586,7 @@ class Comparer
 
             // For pivot-based relations, check the pivot differences
             if ($pivot) {
-                $pivotDifference = new PivotDifference(
-                    $this->buildAttributesDifferenceList($beforeItems[$key]['pivot'], $afterItems[$key]['pivot'])
-                );
+                $pivotDifference = $this->buildPivotDifference($beforeItems[$key]['pivot'], $afterItems[$key]['pivot']);
             }
 
             if ($difference->isDifferent() || $pivotDifference && $pivotDifference->isDifferent()) {
@@ -566,6 +595,11 @@ class Comparer
 
                 $differences->put($key, new RelatedChangedDifference($keyOnly, $class, $difference, $pivotDifference));
             }
+        }
+
+        // If no actual (unignored) differences are found, the entire relation is unchanged.
+        if ( ! count($differences)) {
+            return false;
         }
 
         return new PluralRelationDifference($method, $type, $differences);
