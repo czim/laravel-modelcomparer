@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @property integer $id
  * @property string  $name
+ * @property boolean $flag
  */
 class TestRelatedModel extends Model
 {
     protected $fillable = [
         'name',
+        'flag',
     ];
     
     public function testModels()

@@ -81,6 +81,15 @@ class Comparer implements ComparerInterface
      */
     protected $ignoreTimestamps = true;
 
+    /**
+     * A list of attributes to ignore per model.
+     *
+     * An array of arrays, keyed by model FQN.
+     *
+     * @var array
+     */
+    protected $ignoreAttributesPerModel = [];
+
 
     // ------------------------------------------------------------------------------
     //      Configuration
@@ -139,6 +148,40 @@ class Comparer implements ComparerInterface
 
         return $this;
     }
+
+    /**
+     * Sets a list of attributes per model.
+     *
+     * This overwrites all currently set ignores per model.
+     *
+     * @param array $ignoredPerModel    array of arrays with attribute name strings, keyed by model FQN
+     * @return $this
+     */
+    public function setIgnoredAttributesForModels(array $ignoredPerModel)
+    {
+        $this->ignoreAttributesPerModel = $ignoredPerModel;
+
+        return $this;
+    }
+
+    /**
+     * Sets a list of attributes to ignore for a given model.
+     *
+     * @param string|Model $model
+     * @param array        $ignored
+     * @return $this
+     */
+    public function setIgnoredAttributesForModel($model, array $ignored)
+    {
+        if (is_object($model)) {
+            $model = get_class($model);
+        }
+
+        $this->ignoreAttributesPerModel[ $model ] = $ignored;
+
+        return $this;
+    }
+
 
     // ------------------------------------------------------------------------------
     //      Comparison
@@ -310,6 +353,10 @@ class Comparer implements ComparerInterface
         if ($this->ignoreTimestamps && $model->timestamps) {
             $ignoreKeys[] = $model->getCreatedAtColumn();
             $ignoreKeys[] = $model->getUpdatedAtColumn();
+        }
+
+        if (array_key_exists(get_class($model), $this->ignoreAttributesPerModel)) {
+            $ignoreKeys = array_merge($ignoreKeys, $this->ignoreAttributesPerModel[get_class($model)]);
         }
 
         $attributes = array_except($model->attributesToArray(), $ignoreKeys);

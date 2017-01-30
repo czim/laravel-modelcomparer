@@ -48,6 +48,7 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
         Schema::create('test_related_models', function($table) {
             $table->increments('id');
             $table->string('name', 255)->nullable();
+            $table->boolean('flag')->default(false)->nullable();
             $table->timestamps();
         });
 
