@@ -41,6 +41,25 @@ interface ComparerInterface
      */
     public function setNestedCompareRelations(array $compareFully);
 
+    /**
+     * Sets a list of attributes per model.
+     *
+     * This overwrites all currently set ignores per model.
+     *
+     * @param array $ignoredPerModel    array of arrays with attribute name strings, keyed by model FQN
+     * @return $this
+     */
+    public function setIgnoredAttributesForModels(array $ignoredPerModel);
+
+    /**
+     * Sets a list of attributes to ignore for a given model.
+     *
+     * @param string|Model $model
+     * @param array        $ignored
+     * @return $this
+     */
+    public function setIgnoredAttributesForModel($model, array $ignored);
+
 
     /**
      * Sets the before state to be compared with an after state later.
