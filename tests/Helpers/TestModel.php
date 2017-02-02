@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property float   $float
  * @property string  $text
  * @property bool    $boolean
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
  */
 class TestModel extends Model
 {
@@ -40,8 +42,4 @@ class TestModel extends Model
         return $this->belongsToMany(TestRelatedAlpha::class);
     }
 
-    public function testRelatedBetas()
-    {
-        return $this->belongsToMany(TestRelatedBeta::class);
-    }
 }
