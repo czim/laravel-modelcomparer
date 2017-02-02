@@ -4,6 +4,7 @@ namespace Czim\ModelComparer\Test;
 use Carbon\Carbon;
 use Czim\ModelComparer\Comparer\Comparer;
 use Czim\ModelComparer\Data\AttributeDifference;
+use Czim\ModelComparer\Data\ModelCreatedDifference;
 use Czim\ModelComparer\Data\ModelDifference;
 use Czim\ModelComparer\Data\PivotDifference;
 use Czim\ModelComparer\Data\PluralRelationDifference;
@@ -889,6 +890,68 @@ class ComparerTest extends TestCase
         $this->assertFalse($difference->relations()->has('testRelatedAlphas'));
     }
 
+
+    // ------------------------------------------------------------------------------
+    //      Creating Models
+    // ------------------------------------------------------------------------------
+
+    /**
+     * @test
+     */
+    function it_tracks_models_related_after_that_were_created_since_the_before_state()
+    {
+        // Set up
+        $this->setUpSimpleBeforeState();
+        /** @var TestModel $model */
+        $model = TestModel::first();
+        $model->load('testRelatedModel', 'testRelatedAlphas');
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setBeforeState($model);
+
+        $create = TestRelatedModel::create([
+            'name' => 'Create New',
+        ]);
+        $model->testRelatedModel()->associate($create->id);
+        $model->save();
+
+        $create = TestRelatedAlpha::create([
+            'name' => 'Create New Alpha',
+        ]);
+        $model->testRelatedAlphas()->sync([ $create->id ]);
+
+        $model->load('testRelatedModel', 'testRelatedAlphas');
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertInstanceOf(ModelDifference::class, $difference);
+        $this->assertCount(2, $difference->relations(), "There should be 2 relation changes");
+
+        $this->assertTrue($difference->relations()->has('testRelatedModel'));
+        $this->assertInstanceOf(SingleRelationDifference::class, $object = $difference->relations()['testRelatedModel']);
+        /** @var SingleRelationDifference $object */
+        $this->assertInstanceOf(RelatedReplacedDifference::class, $object = $object->difference());
+        /** @var RelatedReplacedDifference $object */
+        $this->assertInstanceOf(ModelCreatedDifference::class, $object->difference());
+        $this->assertTrue($object->difference()->isDifferent());
+        $this->assertEquals(1, $object->getKeyBefore());
+        $this->assertEquals(3, $object->getKey());
+        $this->assertTrue($object->difference()->attributes()->has('name'), "Created attribute not listed");
+        $this->assertTrue($object->difference()->attributes()->has('flag'), "Created attribute not listed");
+
+        $this->assertTrue($difference->relations()->has('testRelatedAlphas'));
+        $this->assertInstanceOf(PluralRelationDifference::class, $object = $difference->relations()['testRelatedAlphas']);
+        /** @var PluralRelationDifference $object */
+        $this->assertCount(1, $object->related());
+        $this->assertInstanceOf(RelatedAddedDifference::class, $object = $object->related()->first());
+        /** @var RelatedAddedDifference $object */
+        $this->assertInstanceOf(ModelCreatedDifference::class, $object->difference());
+        $this->assertTrue($object->difference()->isDifferent());
+        $this->assertEquals(4, $object->getKey());
+        $this->assertTrue($object->difference()->attributes()->has('name'), "Created attribute not listed");
+    }
 
     // ------------------------------------------------------------------------------
     //      Special cases

@@ -5,6 +5,7 @@ use Czim\ModelComparer\Contracts\ComparerInterface;
 use Czim\ModelComparer\Data\AbstractRelationDifference;
 use Czim\ModelComparer\Data\AttributeDifference;
 use Czim\ModelComparer\Data\DifferenceCollection;
+use Czim\ModelComparer\Data\ModelCreatedDifference;
 use Czim\ModelComparer\Data\ModelDifference;
 use Czim\ModelComparer\Data\PivotDifference;
 use Czim\ModelComparer\Data\PluralRelationDifference;
@@ -36,6 +37,11 @@ use RuntimeException;
  */
 class Comparer implements ComparerInterface
 {
+
+    /**
+     * @var \Illuminate\Contracts\Events\Dispatcher
+     */
+    protected $events;
 
     /**
      * Before state as a normalized tree.
@@ -90,6 +96,35 @@ class Comparer implements ComparerInterface
      */
     protected $ignoreAttributesPerModel = [];
 
+    /**
+     * Whether model events should be listened to.
+     *
+     * @var bool
+     */
+    protected $listening = false;
+
+    /**
+     * A list of lists of keys per model FQN, for models that were created since setting the last before state.
+     *
+     * @var mixed[][]
+     */
+    protected $createdSinceBeforeState = [];
+
+    /**
+     * A list of lists of keys per model FQN, for models that were deleted since setting the last before state.
+     *
+     * @var mixed[][]
+     */
+    protected $deletedSinceBeforeState = [];
+
+
+
+    public function __construct()
+    {
+        $this->events = app('events');
+
+        $this->listenForEvents();
+    }
 
     // ------------------------------------------------------------------------------
     //      Configuration
@@ -187,7 +222,6 @@ class Comparer implements ComparerInterface
     //      Comparison
     // ------------------------------------------------------------------------------
 
-
     /**
      * Sets the before state to be compared with an after state later.
      *
@@ -196,9 +230,10 @@ class Comparer implements ComparerInterface
      */
     public function setBeforeState(Model $model)
     {
+        $this->resetBeforeState();
         $this->before = $this->buildNormalizedArrayTree($model);
 
-        return $this;
+        return $this->startListening();
     }
 
     /**
@@ -208,7 +243,9 @@ class Comparer implements ComparerInterface
      */
     public function clearBeforeState()
     {
-        $this->before = null;
+        $this->resetBeforeState();
+
+        $this->stopListening();
 
         return $this;
     }
@@ -228,6 +265,8 @@ class Comparer implements ComparerInterface
         $after = $this->buildNormalizedArrayTree($model);
 
         $difference = $this->buildDifferenceTree(get_class($model), $this->before, $after);
+
+        $this->stopListening();
 
         return $difference;
     }
@@ -586,14 +625,27 @@ class Comparer implements ComparerInterface
                     list($keyOnlyBefore, $classBefore) = $this->getKeyAndClassFromReference($keyBefore, $morph);
                     list($keyOnlyAfter, $classAfter)   = $this->getKeyAndClassFromReference($keyAfter, $morph);
 
-                    $difference = new RelatedReplacedDifference(
-                        $keyOnlyAfter,
-                        $classAfter,
-                        new ModelDifference(
+                    $modelClass = $classAfter ?: $afterItems[ $keyAfter ]['class'];
+
+                    // If the newly added model was created, track this as the difference
+                    if ($this->wasModelCreated($modelClass, $keyOnlyAfter)) {
+                        $difference = new ModelCreatedDifference(
+                            $classAfter ?: $afterItems[ $keyAfter ]['class'],
+                            $this->buildAttributesDifferenceList([], array_get($afterItems[ $keyAfter ], 'attributes', [])),
+                            new DifferenceCollection
+                        );
+                    } else {
+                        $difference = new ModelDifference(
                             $classAfter ?: $afterItems[ $keyAfter ]['class'],
                             new DifferenceCollection,
                             new DifferenceCollection
-                        ),
+                        );
+                    }
+
+                    $difference = new RelatedReplacedDifference(
+                        $keyOnlyAfter,
+                        $classAfter,
+                        $difference,
                         $keyOnlyBefore,
                         $classBefore
                     );
@@ -627,7 +679,18 @@ class Comparer implements ComparerInterface
 
             list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-            $differences->put($key, new RelatedAddedDifference($keyOnly, $class));
+            $modelClass = $class ?: $afterItems[ $key ]['class'];
+
+            $difference = null;
+            if ($this->wasModelCreated($modelClass, $keyOnly)) {
+                $difference = new ModelCreatedDifference(
+                    $modelClass,
+                    $this->buildAttributesDifferenceList([], array_get($afterItems[ $keyOnly ], 'attributes', [])),
+                    new DifferenceCollection
+                );
+            }
+
+            $differences->put($key, new RelatedAddedDifference($keyOnly, $class, $difference));
         }
 
         // Check for changes on previously related models
@@ -715,6 +778,97 @@ class Comparer implements ComparerInterface
         }
 
         return array_unique($keys);
+    }
+
+    // ------------------------------------------------------------------------------
+    //      Events & Tracking
+    // ------------------------------------------------------------------------------
+
+    /**
+     * Resets tracked data connected to the last before state set.
+     */
+    protected function resetBeforeState()
+    {
+        $this->before = null;
+        $this->createdSinceBeforeState = [];
+        $this->deletedSinceBeforeState = [];
+    }
+
+    /**
+     * Returns whether a model was tracked as created since the before state was set.
+     *
+     * @param string $class
+     * @param mixed  $key
+     * @return bool
+     */
+    protected function wasModelCreated($class, $key)
+    {
+        if ( ! array_key_exists($class, $this->createdSinceBeforeState)) {
+            return false;
+        }
+
+        return in_array($key, $this->createdSinceBeforeState[ $class ]);
+    }
+
+    /**
+     * Sets up listening for relevant model events.
+     */
+    protected function listenForEvents()
+    {
+        $this->events->listen(['eloquent.created: *'], function(Model $model) {
+
+            if ( ! $this->listening) {
+                return;
+            }
+
+            $class = get_class($model);
+
+            if ( ! array_key_exists($class, $this->createdSinceBeforeState)) {
+                $this->createdSinceBeforeState[ $class ] = [];
+            }
+
+            $this->createdSinceBeforeState[ $class ][] = $model->getKey();
+        });
+
+        $this->events->listen(['eloquent.deleted: *'], function(Model $model) {
+
+            if ( ! $this->listening) {
+                return;
+            }
+
+            $class = get_class($model);
+
+            if ( ! array_key_exists($class, $this->deletedSinceBeforeState)) {
+                $this->deletedSinceBeforeState[ $class ] = [];
+            }
+
+            $this->deletedSinceBeforeState[ $class ][] = $model->getKey();
+        });
+
+    }
+
+    /**
+     * Stops ignoring model events.
+     *
+     * @return $this
+     */
+    protected function startListening()
+    {
+        $this->listening = true;
+
+        return $this;
+    }
+
+    /**
+     * Starts ignoring model events (again).
+     *
+     * @return $this
+     */
+    protected function stopListening()
+    {
+        $this->listening = false;
+
+        return $this;
     }
 
 }

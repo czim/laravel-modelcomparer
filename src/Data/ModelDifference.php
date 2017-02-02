@@ -6,7 +6,7 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 
 /**
- * Class RelationDifference
+ * Class ModelDifference
  *
  * Difference rapport on an Eloquent relation of a model.
  */

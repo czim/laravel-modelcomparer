@@ -38,13 +38,15 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
 
 
     /**
-     * @param mixed|false $key      key for the newly related model
-     * @param string|null $class
+     * @param mixed|false                                 $key          key for the newly related model
+     * @param string|null                                 $class
+     * @param ModelDifference|ModelCreatedDifference|null $difference   difference if model is newly created
      */
-    public function __construct($key, $class = null)
+    public function __construct($key, $class = null, ModelDifference $difference = null)
     {
-        $this->key   = $key;
-        $this->class = $class;
+        $this->key        = $key;
+        $this->class      = $class;
+        $this->difference = $difference;
     }
 
     /**
@@ -81,6 +83,16 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
         }
 
         return $this->key;
+    }
+
+    /**
+     * Returns difference for the added model.
+     *
+     * @return ModelDifference|bool
+     */
+    public function difference()
+    {
+        return $this->difference ?: false;
     }
 
     /**
