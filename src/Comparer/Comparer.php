@@ -6,15 +6,7 @@ use Czim\ModelComparer\Contracts\ComparerInterface;
 use Czim\ModelComparer\Contracts\CompareStrategyInterface;
 use Czim\ModelComparer\Data;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Illuminate\Database\Eloquent\Relations\MorphPivot;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Database\Eloquent\Relations\Pivot;
-use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
@@ -285,14 +277,14 @@ class Comparer implements ComparerInterface
         foreach ($relationKeys as $relationKey) {
 
             if (    $relationKey == 'pivot'
-                &&  (   ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof Pivot
-                    ||  ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof MorphPivot
+                &&  (   ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof Relations\Pivot
+                    ||  ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof Relations\MorphPivot
                     )
             ) {
-                /** @var MorphPivot $pivotObject */
+                /** @var Relations\MorphPivot $pivotObject */
                 // todo: get morph type keys
 
-                /** @var Pivot $pivotObject */
+                /** @var Relations\Pivot $pivotObject */
                 $pivotKeys = array_filter([
                     $pivotObject->getKey(),
                     $pivotObject->getOtherKey(),
@@ -313,7 +305,7 @@ class Comparer implements ComparerInterface
                 continue;
             }
 
-            /** @var Relation $relationInstance */
+            /** @var Relations\Relation $relationInstance */
             $relationName     = camel_case($relationKey);
             $relationInstance = $model->{$relationName}();
             $nestedParent     = ($parent ? $parent . '.' : '') . $relationName;
@@ -324,9 +316,9 @@ class Comparer implements ComparerInterface
 
             $foreignKeys = [];
 
-            if ($relationInstance instanceof BelongsTo) {
+            if ($relationInstance instanceof Relations\BelongsTo) {
                 $foreignKeys[] = $relationInstance->getForeignKey();
-            } elseif ($relationInstance instanceof MorphTo) {
+            } elseif ($relationInstance instanceof Relations\MorphTo) {
                 $foreignKeys[] = $relationInstance->getForeignKey();
                 $foreignKeys[] = $relationInstance->getMorphType();
             }
@@ -401,35 +393,35 @@ class Comparer implements ComparerInterface
     }
 
     /**
-     * @param Relation $relation
+     * @param Relations\Relation $relation
      * @return bool
      */
-    protected function isSingleRelation(Relation $relation)
+    protected function isSingleRelation(Relations\Relation $relation)
     {
-        return  (   $relation instanceof BelongsTo
-                ||  $relation instanceof HasOne
-                ||  $relation instanceof MorphTo
-                ||  $relation instanceof MorphOne
+        return  (   $relation instanceof Relations\BelongsTo
+                ||  $relation instanceof Relations\HasOne
+                ||  $relation instanceof Relations\MorphTo
+                ||  $relation instanceof Relations\MorphOne
                 );
     }
 
     /**
-     * @param Relation $relation
+     * @param Relations\Relation $relation
      * @return bool
      */
-    protected function isMorphTo(Relation $relation)
+    protected function isMorphTo(Relations\Relation $relation)
     {
-        return $relation instanceof MorphTo;
+        return $relation instanceof Relations\MorphTo;
     }
 
     /**
-     * @param Relation $relation
+     * @param Relations\Relation $relation
      * @return bool
      */
-    protected function hasPivotTable(Relation $relation)
+    protected function hasPivotTable(Relations\Relation $relation)
     {
-        return  $relation instanceof BelongsToMany
-            ||  $relation instanceof MorphToMany;
+        return  $relation instanceof Relations\BelongsToMany
+            ||  $relation instanceof Relations\MorphToMany;
     }
 
     /**
