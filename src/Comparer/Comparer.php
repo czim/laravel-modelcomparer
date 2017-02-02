@@ -2,18 +2,7 @@
 namespace Czim\ModelComparer\Comparer;
 
 use Czim\ModelComparer\Contracts\ComparerInterface;
-use Czim\ModelComparer\Data\AbstractRelationDifference;
-use Czim\ModelComparer\Data\AttributeDifference;
-use Czim\ModelComparer\Data\DifferenceCollection;
-use Czim\ModelComparer\Data\ModelCreatedDifference;
-use Czim\ModelComparer\Data\ModelDifference;
-use Czim\ModelComparer\Data\PivotDifference;
-use Czim\ModelComparer\Data\PluralRelationDifference;
-use Czim\ModelComparer\Data\RelatedAddedDifference;
-use Czim\ModelComparer\Data\RelatedChangedDifference;
-use Czim\ModelComparer\Data\RelatedRemovedDifference;
-use Czim\ModelComparer\Data\RelatedReplacedDifference;
-use Czim\ModelComparer\Data\SingleRelationDifference;
+use Czim\ModelComparer\Data;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -254,7 +243,7 @@ class Comparer implements ComparerInterface
      * Compares the earlier set before state with a new after state.
      *
      * @param Model $model
-     * @return ModelDifference
+     * @return Data\ModelDifference
      */
     public function compareWithBefore(Model $model)
     {
@@ -446,13 +435,13 @@ class Comparer implements ComparerInterface
      * @param string      $modelClass
      * @param array|mixed $before       if not an array, model difference should not be tracked
      * @param array|mixed $after        if not an array, model difference should not be tracked
-     * @return ModelDifference
+     * @return Data\ModelDifference
      */
     protected function buildDifferenceTree($modelClass, $before, $after)
     {
         // If difference is ignored, don't build difference tree
         if ( ! is_array($before) || ! is_array($after)) {
-            return new ModelDifference($modelClass, new DifferenceCollection, new DifferenceCollection);
+            return new Data\ModelDifference($modelClass, new Data\DifferenceCollection, new Data\DifferenceCollection);
         }
 
         // Check attributes
@@ -471,7 +460,7 @@ class Comparer implements ComparerInterface
             array_get($after, 'relations', [])
         );
 
-        return new ModelDifference($modelClass, $attributeDiff, $relationDiff);
+        return new Data\ModelDifference($modelClass, $attributeDiff, $relationDiff);
     }
 
     /**
@@ -479,16 +468,16 @@ class Comparer implements ComparerInterface
      *
      * @param array|mixed $before   if not an array, model difference should not be tracked
      * @param array|mixed $after    if not an array, model difference should not be tracked
-     * @return PivotDifference
+     * @return Data\PivotDifference
      */
     protected function buildPivotDifference($before, $after)
     {
         // If ignored, return empty difference
         if ( ! is_array($before) || ! is_array($after)) {
-            return new PivotDifference(new DifferenceCollection);
+            return new Data\PivotDifference(new Data\DifferenceCollection);
         }
 
-        return new PivotDifference(
+        return new Data\PivotDifference(
             $this->buildAttributesDifferenceList($before, $after)
         );
     }
@@ -498,29 +487,29 @@ class Comparer implements ComparerInterface
      *
      * @param array $before
      * @param array $after
-     * @return DifferenceCollection
+     * @return Data\DifferenceCollection
      */
     protected function buildAttributesDifferenceList(array $before, array $after)
     {
-        $differences = new DifferenceCollection;
+        $differences = new Data\DifferenceCollection;
 
         foreach ($before as $key => $value) {
 
             // If the key does not exist in the new array
             if ( ! array_key_exists($key, $after)) {
-                $differences->put($key, new AttributeDifference($value, false, false, true));
+                $differences->put($key, new Data\AttributeDifference($value, false, false, true));
                 continue;
             }
 
             // If the key does exist, check if the value is difference
             if ( ! $this->isAttributeValueEqual($value, $after[ $key ])) {
-                $differences->put($key, new AttributeDifference($value, $after[ $key ]));
+                $differences->put($key, new Data\AttributeDifference($value, $after[ $key ]));
             }
         }
 
         // List differences for newly added keys not present before
         foreach (array_diff(array_keys($after), array_keys($before)) as $key) {
-            $differences->put($key, new AttributeDifference(false, $after[$key], true));
+            $differences->put($key, new Data\AttributeDifference(false, $after[$key], true));
         }
 
         return $differences;
@@ -533,11 +522,11 @@ class Comparer implements ComparerInterface
      *
      * @param array $before
      * @param array $after
-     * @return DifferenceCollection
+     * @return Data\DifferenceCollection
      */
     protected function buildRelationsDifferenceList(array $before, array $after)
     {
-        $differences = new DifferenceCollection;
+        $differences = new Data\DifferenceCollection;
 
         foreach ($before as $key => $value) {
 
@@ -563,7 +552,7 @@ class Comparer implements ComparerInterface
      *
      * @param array  $before
      * @param array  $after
-     * @return AbstractRelationDifference|false     false if the data is 100% the same.
+     * @return Data\AbstractRelationDifference|false     false if the data is 100% the same.
      */
     protected function getRelationDifference(array $before, array $after)
     {
@@ -588,14 +577,14 @@ class Comparer implements ComparerInterface
                 $key = head(array_keys($afterItems));
                 list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-                $difference = new RelatedAddedDifference($key, $class);
+                $difference = new Data\RelatedAddedDifference($key, $class);
 
             } elseif ( ! count($afterItems)) {
 
                 $key = head(array_keys($beforeItems));
                 list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-                $difference = new RelatedRemovedDifference($key, $class);
+                $difference = new Data\RelatedRemovedDifference($key, $class);
 
             } else {
 
@@ -618,7 +607,7 @@ class Comparer implements ComparerInterface
 
                     list($keyOnlyBefore, $classBefore) = $this->getKeyAndClassFromReference($keyBefore, $morph);
 
-                    $difference = new RelatedChangedDifference($keyOnlyBefore, $classBefore, $difference);
+                    $difference = new Data\RelatedChangedDifference($keyOnlyBefore, $classBefore, $difference);
 
                 } else {
                     // The model related before was replaced by another
@@ -629,20 +618,20 @@ class Comparer implements ComparerInterface
 
                     // If the newly added model was created, track this as the difference
                     if ($this->wasModelCreated($modelClass, $keyOnlyAfter)) {
-                        $difference = new ModelCreatedDifference(
+                        $difference = new Data\ModelCreatedDifference(
                             $classAfter ?: $afterItems[ $keyAfter ]['class'],
                             $this->buildAttributesDifferenceList([], array_get($afterItems[ $keyAfter ], 'attributes', [])),
-                            new DifferenceCollection
+                            new Data\DifferenceCollection
                         );
                     } else {
-                        $difference = new ModelDifference(
+                        $difference = new Data\ModelDifference(
                             $classAfter ?: $afterItems[ $keyAfter ]['class'],
-                            new DifferenceCollection,
-                            new DifferenceCollection
+                            new Data\DifferenceCollection,
+                            new Data\DifferenceCollection
                         );
                     }
 
-                    $difference = new RelatedReplacedDifference(
+                    $difference = new Data\RelatedReplacedDifference(
                         $keyOnlyAfter,
                         $classAfter,
                         $difference,
@@ -652,12 +641,12 @@ class Comparer implements ComparerInterface
                 }
             }
 
-            return new SingleRelationDifference($method, $type, $difference);
+            return new Data\SingleRelationDifference($method, $type, $difference);
         }
 
         // Plural relations
 
-        $differences = new DifferenceCollection;
+        $differences = new Data\DifferenceCollection;
 
         if ( ! count($beforeItems) && ! count($afterItems)) {
             // Nothing changed, still 0 connections
@@ -670,7 +659,7 @@ class Comparer implements ComparerInterface
 
             list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-            $differences->put($key, new RelatedRemovedDifference($keyOnly, $class));
+            $differences->put($key, new Data\RelatedRemovedDifference($keyOnly, $class));
         }
 
         // Find relations that are newly present
@@ -683,14 +672,14 @@ class Comparer implements ComparerInterface
 
             $difference = null;
             if ($this->wasModelCreated($modelClass, $keyOnly)) {
-                $difference = new ModelCreatedDifference(
+                $difference = new Data\ModelCreatedDifference(
                     $modelClass,
                     $this->buildAttributesDifferenceList([], array_get($afterItems[ $keyOnly ], 'attributes', [])),
-                    new DifferenceCollection
+                    new Data\DifferenceCollection
                 );
             }
 
-            $differences->put($key, new RelatedAddedDifference($keyOnly, $class, $difference));
+            $differences->put($key, new Data\RelatedAddedDifference($keyOnly, $class, $difference));
         }
 
         // Check for changes on previously related models
@@ -711,7 +700,7 @@ class Comparer implements ComparerInterface
 
                 list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-                $differences->put($key, new RelatedChangedDifference($keyOnly, $class, $difference, $pivotDifference));
+                $differences->put($key, new Data\RelatedChangedDifference($keyOnly, $class, $difference, $pivotDifference));
             }
         }
 
@@ -720,7 +709,7 @@ class Comparer implements ComparerInterface
             return false;
         }
 
-        return new PluralRelationDifference($method, $type, $differences);
+        return new Data\PluralRelationDifference($method, $type, $differences);
     }
 
 
