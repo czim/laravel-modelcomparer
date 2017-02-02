@@ -1,7 +1,9 @@
 <?php
 namespace Czim\ModelComparer\Comparer;
 
+use Czim\ModelComparer\Comparer\Strategies\SimpleStrategy;
 use Czim\ModelComparer\Contracts\ComparerInterface;
+use Czim\ModelComparer\Contracts\CompareStrategyInterface;
 use Czim\ModelComparer\Data;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -62,12 +64,13 @@ class Comparer implements ComparerInterface
     protected $alwaysCompareTranslationsFully = true;
 
     /**
-     * Whether comparison of values should be done loosely, to filter out potentially meaningless changes.
+     * Whether comparison of values should be done strictly.
+     * If not strict, filters out out potentially meaningless changes.
      * (boolean false to 0, for instance).
      *
      * @var bool
      */
-    protected $loosyValueComparison = true;
+    protected $strictComparison = false;
 
     /**
      * Whether changes to model timestamps should be ignored.
@@ -140,7 +143,7 @@ class Comparer implements ComparerInterface
      */
     public function useStrictComparison($strict = true)
     {
-        $this->loosyValueComparison = ! $strict;
+        $this->strictComparison = $strict;
 
         return $this;
     }
@@ -738,18 +741,13 @@ class Comparer implements ComparerInterface
      */
     protected function isAttributeValueEqual($before, $after)
     {
-        // todo: do array and special object comparison
-        // todo: strategy-based comparison, only count real & unignored changes
+        // Determine the strategy
+        $strategy = SimpleStrategy::class;
 
-        if ($before === $after) {
-            return true;
-        }
+        /** @var CompareStrategyInterface $strategyInstance */
+        $strategyInstance = app($strategy);
 
-        if ($this->loosyValueComparison && $before == $after) {
-            return true;
-        }
-
-        return false;
+        return $strategyInstance->equal($before, $after, $this->strictComparison);
     }
 
     /**
