@@ -572,14 +572,28 @@ class Comparer implements ComparerInterface
                 $key = head(array_keys($afterItems));
                 list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-                $difference = new Data\RelatedAddedDifference($key, $class);
+                $modelClass = $class ?: $afterItems[ $key ]['class'];
+
+                $difference = null;
+                if ($this->wasModelCreated($modelClass, $key)) {
+                    $difference = new Data\ModelCreatedDifference(
+                        $modelClass,
+                        $this->buildAttributesDifferenceList([], array_get($afterItems[ $key ], 'attributes', [])),
+                        new Data\DifferenceCollection
+                    );
+                }
+
+                $difference = new Data\RelatedAddedDifference($key, $class, $difference);
 
             } elseif ( ! count($afterItems)) {
 
                 $key = head(array_keys($beforeItems));
                 list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-                $difference = new Data\RelatedRemovedDifference($key, $class);
+                $modelClass = $class ?: $beforeItems[ $key ]['class'];
+                $deleted = $this->wasModelDeleted($modelClass, $key);
+
+                $difference = new Data\RelatedRemovedDifference($key, $class, $deleted);
 
             } else {
 
@@ -654,7 +668,11 @@ class Comparer implements ComparerInterface
 
             list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
 
-            $differences->put($key, new Data\RelatedRemovedDifference($keyOnly, $class));
+            $modelClass = $class ?: $beforeItems[ $key ]['class'];
+
+            $deleted = $this->wasModelDeleted($modelClass, $keyOnly);
+
+            $differences->put($key, new Data\RelatedRemovedDifference($keyOnly, $class, $deleted));
         }
 
         // Find relations that are newly present
@@ -759,6 +777,7 @@ class Comparer implements ComparerInterface
         return array_unique($keys);
     }
 
+
     // ------------------------------------------------------------------------------
     //      Events & Tracking
     // ------------------------------------------------------------------------------
@@ -787,6 +806,22 @@ class Comparer implements ComparerInterface
         }
 
         return in_array($key, $this->createdSinceBeforeState[ $class ]);
+    }
+
+    /**
+     * Returns whether a model was tracked as deleted since the before state was set.
+     *
+     * @param string $class
+     * @param mixed  $key
+     * @return bool
+     */
+    protected function wasModelDeleted($class, $key)
+    {
+        if ( ! array_key_exists($class, $this->deletedSinceBeforeState)) {
+            return false;
+        }
+
+        return in_array($key, $this->deletedSinceBeforeState[ $class ]);
     }
 
     /**

@@ -27,15 +27,23 @@ class RelatedRemovedDifference extends AbstractRelatedDifference implements Diff
      */
     protected $class;
 
+    /**
+     * Whether the previously related model was deleted since the before state.
+     *
+     * @var bool
+     */
+    protected $deleted;
+
 
     /**
      * @param mixed|false $key      key for the previously related model
      * @param string|null $class
      */
-    public function __construct($key, $class = null)
+    public function __construct($key, $class = null, $deleted = false)
     {
-        $this->key   = $key;
-        $this->class = $class;
+        $this->key     = $key;
+        $this->class   = $class;
+        $this->deleted = (bool) $deleted;
     }
 
     /**
@@ -75,11 +83,23 @@ class RelatedRemovedDifference extends AbstractRelatedDifference implements Diff
     }
 
     /**
+     * Returns whether the model was deleted since the before state.
+     *
+     * @return bool
+     */
+    public function wasDeleted()
+    {
+        return $this->deleted;
+    }
+
+    /**
      * @return string
      */
     function __toString()
     {
-        return "No longer connected to " . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
+        return "No longer connected to "
+             . ($this->deleted ? ' and deleted ' : null)
+             . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
     }
 
 }
