@@ -889,58 +889,6 @@ class ComparerTest extends TestCase
         $this->assertFalse($difference->relations()->has('testRelatedAlphas'));
     }
 
-    /**
-     * @test
-     */
-    function it_allows_configuring_specific_attributes_to_ignore_in_dot_notation()
-    {
-        // Set up
-        $this->setUpSimpleBeforeState();
-        /** @var TestModel $model */
-        $model = TestModel::first();
-        $model->testRelatedAlphas()->sync([1]);
-        $model->load('testRelatedModel', 'testRelatedAlphas');
-
-        // Test
-        $comparer = new Comparer();
-        $comparer->setIgnoredAttributes([
-            'float',
-            'integer',
-            'testRelatedModel.name',
-            'testRelatedAlphas.name',
-        ]);
-        $comparer->setBeforeState($model);
-
-        $model->float = 30.0;
-        $model->integer = 15;
-        $model->save();
-
-        /** @var TestRelatedModel $relatedModel */
-        $relatedModel = $model->testRelatedModel()->first();
-        $relatedModel->name = 'Changed Test Name 2';
-        $relatedModel->flag = true;
-        $relatedModel->save();
-
-        TestRelatedAlpha::find(1)->update(['name' => 'Should be ignored']);
-
-        $model->load('testRelatedModel', 'testRelatedAlphas');
-
-        $difference = $comparer->compareWithBefore($model);
-
-        // Assert
-        $this->assertInstanceOf(ModelDifference::class, $difference);
-        $this->assertCount(0, $difference->attributes(), "There should be no attribute changes");
-        $this->assertCount(1, $difference->relations(), "There should be 1 relation change");
-        $this->assertTrue($difference->relations()->has('testRelatedModel'));
-        $this->assertInstanceOf(SingleRelationDifference::class, $object = $difference->relations()['testRelatedModel']);
-        /** @var SingleRelationDifference $object */
-        $this->assertInstanceOf(RelatedChangedDifference::class, $object = $object->difference());
-        /** @var RelatedChangedDifference $object */
-        $this->assertTrue($object->difference()->isDifferent());
-        $this->assertCount(1, $object->difference()->attributes(), "Only 1 attribute of testRelatedModel should be changed");
-        $this->assertTrue($object->difference()->attributes()->has('flag'), "Only 'flag' attribute of testRelatedModel should be changed");
-        $this->assertFalse($difference->relations()->has('testRelatedAlphas'));
-    }
 
     // ------------------------------------------------------------------------------
     //      Creating Models
