@@ -663,6 +663,58 @@ class ComparerTest extends TestCase
      */
     function it_compares_a_model_with_unchanged_pivot_attributes_for_unchanged_belongs_to_many_connection()
     {
+        // Set up
+        $this->setUpSimpleBeforeState();
+
+        /** @var TestRelatedAlpha $model */
+        $model = TestRelatedAlpha::first();
+
+        $model->testRelatedBetas()->sync([
+            1 => [ 'position' => 1, 'date' => Carbon::create(2017, 1, 1, 0, 0, 0) ],
+            2 => [ 'position' => 2, 'date' => Carbon::create(2017, 1, 1, 0, 0, 0) ],
+        ]);
+        $model->load('testRelatedBetas');
+
+        // Test
+        $comparer = new Comparer();
+        $comparer->setBeforeState($model);
+
+
+        $model->testRelatedBetas()->sync([
+            1,
+            2,
+        ]);
+        TestRelatedBeta::find(2)->update([ 'name' => 'Changed Beta Name' ]);
+        $model = $model->fresh()->load('testRelatedBetas');
+
+        $difference = $comparer->compareWithBefore($model);
+
+        // Assert
+        $this->assertTrue($difference->isDifferent());
+        $this->assertCount(0, $difference->attributes(), "There should be no attribute changes");
+        $this->assertCount(1, $difference->relations(), "There should be 1 relation change");
+        $this->assertTrue($difference->relations()->has('testRelatedBetas'));
+        $this->assertInstanceOf(PluralRelationDifference::class, $relation = $difference->relations()['testRelatedBetas']);
+        $this->assertCount(1, $relation->related(), "There should be 1 related difference");
+
+        $this->assertTrue($relation->related()->has(2));
+        $this->assertInstanceOf(RelatedChangedDifference::class, $object = $relation->related()->get(2));
+        /** @var RelatedChangedDifference $object */
+        $this->assertEquals(2, $object->getKey(), "Related changed key does not match");
+        $this->assertNull($object->getClass(), "Related changed class does not match");
+        $this->assertFalse($object->hasMessage(), "Related changed should not have a message");
+        $this->assertTrue($object->isPivotRelated());
+        $this->assertInstanceOf(PivotDifference::class, $pivotDifference = $object->pivotDifference());
+        $this->assertInstanceOf(ModelDifference::class, $object = $object->difference());
+        /** @var ModelDifference $object */
+        $this->assertTrue($object->isDifferent(), "Changed model should report different");
+        $this->assertCount(1, $object->attributes(), "There should be 1 attribute change");
+        $this->assertCount(0, $object->relations(), "There should be no relation changes");
+        $this->assertTrue($object->attributes()->has('name'), "'name' attribute should be marked changed");
+
+        /** @var PivotDifference $pivotDifference */
+        $this->assertFalse($pivotDifference->isDifferent(), "Pivot attributes should not be marked different");
+        $this->assertCount(0, $pivotDifference->attributes(), "There should be no pivot attribute changes");
 
     }
 
