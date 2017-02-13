@@ -8,6 +8,7 @@ use Czim\ModelComparer\Data\AttributeDifference;
 use Czim\ModelComparer\Data\DifferenceCollection;
 use Czim\ModelComparer\Data\ModelDifference;
 use Czim\ModelComparer\Data\PluralRelationDifference;
+use Czim\ModelComparer\Data\RelatedAddedDifference;
 use Czim\ModelComparer\Data\RelatedChangedDifference;
 use Czim\ModelComparer\Data\SingleRelationDifference;
 
@@ -125,6 +126,12 @@ class ArrayPresenter implements DifferencePresenterInterface
 
             if ($difference->isPivotRelated() && $difference->pivotDifference()->isDifferent()) {
                 $output['pivot'] = $this->convertAttributes($difference->pivotDifference()->attributes());
+            }
+
+        } elseif ($difference instanceof RelatedAddedDifference ) {
+
+            if ($difference->difference() && $difference->difference()->isDifferent()) {
+                $output['model'] = $this->convertModelDifference($difference->difference());
             }
         }
 

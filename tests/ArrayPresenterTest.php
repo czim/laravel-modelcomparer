@@ -82,6 +82,27 @@ class ArrayPresenterTest extends TestCase
                     BelongsTo::class,
                     new RelatedRemovedDifference(3)
                 ),
+                'testRelation4' => new SingleRelationDifference(
+                    'testRelation4',
+                    BelongsTo::class,
+                    new RelatedAddedDifference(
+                        2,
+                        null,
+                        // added model was created
+                        new ModelDifference(
+                            TestRelatedModel::class,
+                            new DifferenceCollection([
+                                'testing' => new AttributeDifference(null, 'afterish', true)
+                            ]),
+                            new DifferenceCollection
+                        )
+                    )
+                ),
+                'testRelation5' => new SingleRelationDifference(
+                    'testRelation5',
+                    BelongsTo::class,
+                    new RelatedRemovedDifference(3, null, true) // removed model deleted
+                ),
                 'testPivotRelation' => new PluralRelationDifference(
                     'testPivotRelation',
                     BelongsToMany::class,
@@ -125,18 +146,24 @@ class ArrayPresenterTest extends TestCase
 
         $output = array_dot($output);
 
-        $this->assertCount(8, $output);
-
         $this->assertArraySubset([
             'attributes.boolean',
             'relations.testRelation.model.attributes.testing',
             'relations.testRelation2.related',
             'relations.testRelation3.related',
+            'relations.testRelation4.related',
+            'relations.testRelation4.model.attributes.testing',
+            'relations.testRelation5.related',
             'relations.testPivotRelation.1.model.attributes.testing',
             'relations.testPivotRelation.2.model.attributes.testing',
             'relations.testPivotRelation.2.pivot.testing',
             'relations.testPivotRelation.3.related',
         ], array_keys($output));
+
+        $this->assertCount(11, $output);
+
+        $this->assertContains('created', $output['relations.testRelation4.related']);
+        $this->assertContains('deleted', $output['relations.testRelation5.related']);
     }
 
 }
