@@ -42,12 +42,6 @@ The result is an comparison information object that stores all the changes and o
 
 ## To Do
 
-- Strategy setup for comparison
-
-- Add presenters that convert the object tree to a format
-    - messagebag?
-- Add tests for complicated nested cases and all relation types
-
 - Add singleton with facade for easy tracking of changes
     - would use the model's class & key to keep track of before states and allow setting after states
     - might even be done using an observer pattern
