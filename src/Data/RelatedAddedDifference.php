@@ -130,7 +130,9 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
      */
     public function getMessage()
     {
-        return "Newly connected to " . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
+        return 'Newly connected to '
+             . ($this->difference ? 'newly created ' : null)
+             . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
     }
 
 }

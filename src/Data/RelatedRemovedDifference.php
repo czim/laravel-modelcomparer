@@ -97,8 +97,8 @@ class RelatedRemovedDifference extends AbstractRelatedDifference implements Diff
      */
     function __toString()
     {
-        return "No longer connected to "
-             . ($this->deleted ? ' and deleted ' : null)
+        return 'No longer connected to '
+             . ($this->deleted ? 'and deleted ' : null)
              . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
     }
 
