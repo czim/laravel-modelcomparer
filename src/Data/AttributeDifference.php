@@ -164,7 +164,7 @@ class AttributeDifference implements DifferenceLeafInterface
         }
 
         if ($this->beforeDoesNotExist) {
-            return "New value {$after} (was not present before)";
+            return "New value {$after}";
         }
 
         if ($this->afterDoesNotExist) {
