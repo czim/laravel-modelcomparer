@@ -3,7 +3,6 @@
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Software License][ico-license]](LICENSE.md)
 [![Build Status](https://travis-ci.org/czim/laravel-modelcomparer.svg?branch=master)](https://travis-ci.org/czim/laravel-modelcomparer)
-[![Latest Stable Version](http://img.shields.io/packagist/v/czim/laravel-modelcompoarer.svg)](https://packagist.org/packages/czim/laravel-modelcomparer)
 
 
 This model comparer is a tool to make it easy to collect, log and report changes made to Eloquent models and their relations.
