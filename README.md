@@ -14,6 +14,14 @@ With this package, it's as simple as loading in the model before making changes,
 The comparer instance tracks the changes and offers the means to create concise changelogs.
 
 
+## Version Compatibility
+
+ Laravel         | Package 
+:----------------|:--------
+ 5.3.x and lower | 0.9.x
+ 5.4.x and up    | 1.4.x
+
+
 ## Install
 
 Via Composer
