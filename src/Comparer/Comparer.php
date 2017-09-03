@@ -829,7 +829,10 @@ class Comparer implements ComparerInterface
      */
     protected function listenForEvents()
     {
-        $this->events->listen(['eloquent.created: *'], function(Model $model) {
+        $this->events->listen(['eloquent.created: *'], function() {
+
+            /** @var Model $model */
+            $model = head(func_get_arg(1));
 
             if ( ! $this->listening) {
                 return;
@@ -844,7 +847,10 @@ class Comparer implements ComparerInterface
             $this->createdSinceBeforeState[ $class ][] = $model->getKey();
         });
 
-        $this->events->listen(['eloquent.deleted: *'], function(Model $model) {
+        $this->events->listen(['eloquent.deleted: *'], function() {
+
+            /** @var Model $model */
+            $model = head(func_get_arg(1));
 
             if ( ! $this->listening) {
                 return;
