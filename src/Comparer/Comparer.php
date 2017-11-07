@@ -833,7 +833,7 @@ class Comparer implements ComparerInterface
 
             /** @var Model $model */
             if (func_num_args() > 1) {
-                $model = func_get_arg(1);
+                $model = head(func_get_arg(1));
             } else {
                 $model = func_get_arg(0);
             }
@@ -855,7 +855,7 @@ class Comparer implements ComparerInterface
 
             /** @var Model $model */
             if (func_num_args() > 1) {
-                $model = func_get_arg(1);
+                $model = head(func_get_arg(1));
             } else {
                 $model = func_get_arg(0);
             }
