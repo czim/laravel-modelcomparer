@@ -832,7 +832,11 @@ class Comparer implements ComparerInterface
         $this->events->listen(['eloquent.created: *'], function() {
 
             /** @var Model $model */
-            $model = head(func_get_arg(1));
+            if (func_num_args() > 1) {
+                $model = func_get_arg(1);
+            } else {
+                $model = func_get_arg(0);
+            }
 
             if ( ! $this->listening) {
                 return;
@@ -850,7 +854,11 @@ class Comparer implements ComparerInterface
         $this->events->listen(['eloquent.deleted: *'], function() {
 
             /** @var Model $model */
-            $model = head(func_get_arg(1));
+            if (func_num_args() > 1) {
+                $model = func_get_arg(1);
+            } else {
+                $model = func_get_arg(0);
+            }
 
             if ( ! $this->listening) {
                 return;
