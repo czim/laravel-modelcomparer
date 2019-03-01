@@ -317,9 +317,9 @@ class Comparer implements ComparerInterface
             $foreignKeys = [];
 
             if ($relationInstance instanceof Relations\BelongsTo) {
-                $foreignKeys[] = $relationInstance->getForeignKey();
+                $foreignKeys[] = $relationInstance->getForeignKeyName();
             } elseif ($relationInstance instanceof Relations\MorphTo) {
-                $foreignKeys[] = $relationInstance->getForeignKey();
+                $foreignKeys[] = $relationInstance->getForeignKeyName();
                 $foreignKeys[] = $relationInstance->getMorphType();
             }
 
