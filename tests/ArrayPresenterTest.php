@@ -164,8 +164,8 @@ class ArrayPresenterTest extends TestCase
 
         static::assertCount(11, $output);
 
-        static::assertContains('created', $output['relations.testRelation4.related']);
-        static::assertContains('deleted', $output['relations.testRelation5.related']);
+        static::assertStringContainsString('created', $output['relations.testRelation4.related']);
+        static::assertStringContainsString('deleted', $output['relations.testRelation5.related']);
     }
 
 }
