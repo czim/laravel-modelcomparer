@@ -20,7 +20,8 @@ The comparer instance tracks the changes and offers the means to create concise 
 :----------------|:--------
  5.3 and older   | 0.9
  5.4 to 5.7      | 1.4
- 5.8 and up      | 1.5
+ 5.8             | 1.5
+ 6.0             | 2.0
 
 
 ## Install
