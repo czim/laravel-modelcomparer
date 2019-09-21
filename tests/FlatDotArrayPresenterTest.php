@@ -1,4 +1,7 @@
 <?php
+/** @noinspection ReturnTypeCanBeDeclaredInspection */
+/** @noinspection AccessModifierPresentedInspection */
+
 namespace Czim\ModelComparer\Test;
 
 use Czim\ModelComparer\Data\AttributeDifference;
@@ -37,10 +40,10 @@ class FlatDotArrayPresenterTest extends TestCase
 
         $output = $presenter->present($difference);
 
-        $this->assertInternalType('array', $output);
-        $this->assertCount(2, $output);
-        $this->assertArrayHasKey('name', $output);
-        $this->assertArrayHasKey('integer', $output);
+        static::assertIsArray($output);
+        static::assertCount(2, $output);
+        static::assertArrayHasKey('name', $output);
+        static::assertArrayHasKey('integer', $output);
     }
 
     /**
@@ -118,19 +121,17 @@ class FlatDotArrayPresenterTest extends TestCase
 
         $output = $presenter->present($difference);
 
-        $this->assertInternalType('array', $output);
-        $this->assertCount(8, $output);
+        static::assertIsArray($output);
+        static::assertCount(8, $output);
 
-        $this->assertArraySubset([
-            'boolean',
-            'testRelation.related.1.testing',
-            'testRelation2.related',
-            'testRelation3.related',
-            'testPivotRelation.1.related.1.testing',
-            'testPivotRelation.2.related.2.testing',
-            'testPivotRelation.2.related.pivot.testing',
-            'testPivotRelation.3.related',
-        ], array_keys($output));
+        static::assertArrayHasKey('boolean', $output);
+        static::assertArrayHasKey('testRelation.related.1.testing', $output);
+        static::assertArrayHasKey('testRelation2.related', $output);
+        static::assertArrayHasKey('testRelation3.related', $output);
+        static::assertArrayHasKey('testPivotRelation.1.related.1.testing', $output);
+        static::assertArrayHasKey('testPivotRelation.2.related.2.testing', $output);
+        static::assertArrayHasKey('testPivotRelation.2.related.pivot.testing', $output);
+        static::assertArrayHasKey('testPivotRelation.3.related', $output);
     }
 
 }

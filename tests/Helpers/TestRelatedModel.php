@@ -2,10 +2,9 @@
 namespace Czim\ModelComparer\Test\Helpers;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Class TestRelatedModel
- *
  * @property integer $id
  * @property string  $name
  * @property boolean $flag
@@ -18,8 +17,8 @@ class TestRelatedModel extends Model
         'name',
         'flag',
     ];
-    
-    public function testModels()
+
+    public function testModels(): HasMany
     {
         return $this->hasMany(TestModel::class);
     }

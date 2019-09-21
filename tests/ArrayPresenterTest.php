@@ -1,4 +1,7 @@
 <?php
+/** @noinspection ReturnTypeCanBeDeclaredInspection */
+/** @noinspection AccessModifierPresentedInspection */
+
 namespace Czim\ModelComparer\Test;
 
 use Czim\ModelComparer\Data\AttributeDifference;
@@ -15,6 +18,7 @@ use Czim\ModelComparer\Test\Helpers\TestModel;
 use Czim\ModelComparer\Test\Helpers\TestRelatedModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Arr;
 
 class ArrayPresenterTest extends TestCase
 {
@@ -37,13 +41,13 @@ class ArrayPresenterTest extends TestCase
 
         $output = $presenter->present($difference);
 
-        $this->assertInternalType('array', $output);
+        static::assertIsArray($output);
 
-        $output = array_dot($output);
+        $output = Arr::dot($output);
 
-        $this->assertCount(2, $output);
-        $this->assertArrayHasKey('attributes.name', $output);
-        $this->assertArrayHasKey('attributes.integer', $output);
+        static::assertCount(2, $output);
+        static::assertArrayHasKey('attributes.name', $output);
+        static::assertArrayHasKey('attributes.integer', $output);
     }
 
     /**
@@ -142,28 +146,26 @@ class ArrayPresenterTest extends TestCase
 
         $output = $presenter->present($difference);
 
-        $this->assertInternalType('array', $output);
+        static::assertIsArray($output);
 
-        $output = array_dot($output);
+        $output = Arr::dot($output);
 
-        $this->assertArraySubset([
-            'attributes.boolean',
-            'relations.testRelation.model.attributes.testing',
-            'relations.testRelation2.related',
-            'relations.testRelation3.related',
-            'relations.testRelation4.related',
-            'relations.testRelation4.model.attributes.testing',
-            'relations.testRelation5.related',
-            'relations.testPivotRelation.1.model.attributes.testing',
-            'relations.testPivotRelation.2.model.attributes.testing',
-            'relations.testPivotRelation.2.pivot.testing',
-            'relations.testPivotRelation.3.related',
-        ], array_keys($output));
+        static::assertArrayHasKey('attributes.boolean', $output);
+        static::assertArrayHasKey('relations.testRelation.model.attributes.testing', $output);
+        static::assertArrayHasKey('relations.testRelation2.related', $output);
+        static::assertArrayHasKey('relations.testRelation3.related', $output);
+        static::assertArrayHasKey('relations.testRelation4.related', $output);
+        static::assertArrayHasKey('relations.testRelation4.model.attributes.testing', $output);
+        static::assertArrayHasKey('relations.testRelation5.related', $output);
+        static::assertArrayHasKey('relations.testPivotRelation.1.model.attributes.testing', $output);
+        static::assertArrayHasKey('relations.testPivotRelation.2.model.attributes.testing', $output);
+        static::assertArrayHasKey('relations.testPivotRelation.2.pivot.testing', $output);
+        static::assertArrayHasKey('relations.testPivotRelation.3.related', $output);
 
-        $this->assertCount(11, $output);
+        static::assertCount(11, $output);
 
-        $this->assertContains('created', $output['relations.testRelation4.related']);
-        $this->assertContains('deleted', $output['relations.testRelation5.related']);
+        static::assertContains('created', $output['relations.testRelation4.related']);
+        static::assertContains('deleted', $output['relations.testRelation5.related']);
     }
 
 }

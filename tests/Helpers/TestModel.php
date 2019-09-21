@@ -2,10 +2,10 @@
 namespace Czim\ModelComparer\Test\Helpers;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * Class TestModel
- *
  * @property integer $id
  * @property string  $name
  * @property integer integer
@@ -25,19 +25,19 @@ class TestModel extends Model
         'boolean',
         'test_related_model_id',
     ];
-    
+
     protected $casts = [
         'integer' => 'integer',
         'float'   => 'float',
         'boolean' => 'boolean',
     ];
-    
-    public function testRelatedModel()
+
+    public function testRelatedModel(): BelongsTo
     {
         return $this->belongsTo(TestRelatedModel::class);
     }
 
-    public function testRelatedAlphas()
+    public function testRelatedAlphas(): BelongsToMany
     {
         return $this->belongsToMany(TestRelatedAlpha::class);
     }

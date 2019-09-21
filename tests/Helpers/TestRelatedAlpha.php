@@ -2,10 +2,9 @@
 namespace Czim\ModelComparer\Test\Helpers;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * Class TestRelatedAlpha
- *
  * @property integer $id
  * @property string  $name
  * @property \Carbon\Carbon $created_at
@@ -20,13 +19,13 @@ class TestRelatedAlpha extends Model
     protected $casts = [
         'flag' => 'boolean',
     ];
-    
-    public function testModel()
+
+    public function testModel(): BelongsToMany
     {
         return $this->belongsToMany(TestModel::class);
     }
 
-    public function testRelatedBetas()
+    public function testRelatedBetas(): BelongsToMany
     {
         return $this->belongsToMany(TestRelatedBeta::class)
             ->withPivot([
