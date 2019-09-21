@@ -7,7 +7,10 @@ use Czim\ModelComparer\Contracts\CompareStrategyInterface;
 use Czim\ModelComparer\Data;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -120,9 +123,9 @@ class Comparer implements ComparerInterface
      * @param bool $ignore
      * @return $this
      */
-    public function ignoreTimestamps($ignore = true)
+    public function ignoreTimestamps(bool $ignore = true): ComparerInterface
     {
-        $this->ignoreTimestamps = (bool) $ignore;
+        $this->ignoreTimestamps = $ignore;
 
         return $this;
     }
@@ -133,7 +136,7 @@ class Comparer implements ComparerInterface
      * @param bool $strict
      * @return $this
      */
-    public function useStrictComparison($strict = true)
+    public function useStrictComparison(bool $strict = true): ComparerInterface
     {
         $this->strictComparison = $strict;
 
@@ -145,7 +148,7 @@ class Comparer implements ComparerInterface
      *
      * @return $this
      */
-    public function alwaysCompareFully()
+    public function alwaysCompareFully(): ComparerInterface
     {
         $this->nestedCompareFully = false;
 
@@ -161,7 +164,7 @@ class Comparer implements ComparerInterface
      * @param array $compareFully
      * @return $this
      */
-    public function setNestedCompareRelations(array $compareFully)
+    public function setNestedCompareRelations(array $compareFully): ComparerInterface
     {
         $this->nestedCompareFully = $compareFully;
 
@@ -176,7 +179,7 @@ class Comparer implements ComparerInterface
      * @param array $ignoredPerModel    array of arrays with attribute name strings, keyed by model FQN
      * @return $this
      */
-    public function setIgnoredAttributesForModels(array $ignoredPerModel)
+    public function setIgnoredAttributesForModels(array $ignoredPerModel): ComparerInterface
     {
         $this->ignoreAttributesPerModel = $ignoredPerModel;
 
@@ -190,7 +193,7 @@ class Comparer implements ComparerInterface
      * @param array        $ignored
      * @return $this
      */
-    public function setIgnoredAttributesForModel($model, array $ignored)
+    public function setIgnoredAttributesForModel($model, array $ignored): ComparerInterface
     {
         if (is_object($model)) {
             $model = get_class($model);
@@ -212,7 +215,7 @@ class Comparer implements ComparerInterface
      * @param Model $model
      * @return $this
      */
-    public function setBeforeState(Model $model)
+    public function setBeforeState(Model $model): ComparerInterface
     {
         $this->resetBeforeState();
         $this->before = $this->buildNormalizedArrayTree($model);
@@ -225,7 +228,7 @@ class Comparer implements ComparerInterface
      *
      * @return $this
      */
-    public function clearBeforeState()
+    public function clearBeforeState(): ComparerInterface
     {
         $this->resetBeforeState();
 
@@ -240,10 +243,10 @@ class Comparer implements ComparerInterface
      * @param Model $model
      * @return Data\ModelDifference
      */
-    public function compareWithBefore(Model $model)
+    public function compareWithBefore(Model $model): Data\ModelDifference
     {
         if (null === $this->before) {
-            throw new RuntimeException("No before state was set for comparison");
+            throw new RuntimeException('No before state was set for comparison');
         }
 
         $after = $this->buildNormalizedArrayTree($model);
@@ -264,7 +267,7 @@ class Comparer implements ComparerInterface
      * @param null|string $parent       dot-notation parent chain
      * @return array
      */
-    protected function buildNormalizedArrayTree(Model $model, $parent = null)
+    protected function buildNormalizedArrayTree(Model $model, ?string $parent = null): array
     {
         // Analyze relations, build nested tree
         $relationKeys = array_keys($model->getRelations());
@@ -276,9 +279,9 @@ class Comparer implements ComparerInterface
 
         foreach ($relationKeys as $relationKey) {
 
-            if (    $relationKey == 'pivot'
-                &&  (   ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof Relations\Pivot
-                    ||  ($pivotObject = array_get($model->getRelations(), 'pivot')) instanceof Relations\MorphPivot
+            if (    $relationKey === 'pivot'
+                &&  (   ($pivotObject = Arr::get($model->getRelations(), 'pivot')) instanceof Relations\Pivot
+                    ||  ($pivotObject = Arr::get($model->getRelations(), 'pivot')) instanceof Relations\MorphPivot
                     )
             ) {
                 /** @var Relations\MorphPivot $pivotObject */
@@ -296,7 +299,7 @@ class Comparer implements ComparerInterface
                     $pivotKeys[] = $pivotObject->getUpdatedAtColumn();
                 }
 
-                $pivotAttributes = array_except($pivotObject->attributesToArray(), $pivotKeys);
+                $pivotAttributes = Arr::except($pivotObject->attributesToArray(), $pivotKeys);
 
                 if (count($pivotAttributes)) {
                     $pivot = $pivotAttributes;
@@ -306,7 +309,7 @@ class Comparer implements ComparerInterface
             }
 
             /** @var Relations\Relation $relationInstance */
-            $relationName     = camel_case($relationKey);
+            $relationName     = Str::camel($relationKey);
             $relationInstance = $model->{$relationName}();
             $nestedParent     = ($parent ? $parent . '.' : '') . $relationName;
 
@@ -348,7 +351,7 @@ class Comparer implements ComparerInterface
                 // If the compare should not be nested contextually, only include a list of keys
                 if (    false !== $this->nestedCompareFully
                     &&  ( ! $this->alwaysCompareTranslationsFully || $relationName !== 'translations')
-                    &&  ! in_array($nestedParent, $this->nestedCompareFully)
+                    &&  ! in_array($nestedParent, $this->nestedCompareFully, true)
                 ) {
                     $items[ $key ] = $key;
                     continue;
@@ -382,7 +385,7 @@ class Comparer implements ComparerInterface
             $ignoreKeys = array_merge($ignoreKeys, $this->ignoreAttributesPerModel[get_class($model)]);
         }
 
-        $attributes = array_except($model->attributesToArray(), $ignoreKeys);
+        $attributes = Arr::except($model->attributesToArray(), $ignoreKeys);
 
         return [
             'class'      => get_class($model),
@@ -392,11 +395,7 @@ class Comparer implements ComparerInterface
         ];
     }
 
-    /**
-     * @param Relations\Relation $relation
-     * @return bool
-     */
-    protected function isSingleRelation(Relations\Relation $relation)
+    protected function isSingleRelation(Relations\Relation $relation): bool
     {
         return  (   $relation instanceof Relations\BelongsTo
                 ||  $relation instanceof Relations\HasOne
@@ -405,20 +404,12 @@ class Comparer implements ComparerInterface
                 );
     }
 
-    /**
-     * @param Relations\Relation $relation
-     * @return bool
-     */
-    protected function isMorphTo(Relations\Relation $relation)
+    protected function isMorphTo(Relations\Relation $relation): bool
     {
         return $relation instanceof Relations\MorphTo;
     }
 
-    /**
-     * @param Relations\Relation $relation
-     * @return bool
-     */
-    protected function hasPivotTable(Relations\Relation $relation)
+    protected function hasPivotTable(Relations\Relation $relation): bool
     {
         return  $relation instanceof Relations\BelongsToMany
             ||  $relation instanceof Relations\MorphToMany;
@@ -427,16 +418,20 @@ class Comparer implements ComparerInterface
     /**
      * Returns the difference object tree for a the model
      *
-     * @param string      $modelClass
+     * @param string|null $modelClass
      * @param array|mixed $before       if not an array, model difference should not be tracked
      * @param array|mixed $after        if not an array, model difference should not be tracked
      * @return Data\ModelDifference
      */
-    protected function buildDifferenceTree($modelClass, $before, $after)
+    protected function buildDifferenceTree(?string $modelClass, $before, $after): Data\ModelDifference
     {
         // If difference is ignored, don't build difference tree
         if ( ! is_array($before) || ! is_array($after)) {
-            return new Data\ModelDifference($modelClass, new Data\DifferenceCollection, new Data\DifferenceCollection);
+            return new Data\ModelDifference(
+                $modelClass,
+                new Data\DifferenceCollection,
+                new Data\DifferenceCollection
+            );
         }
 
         // Check attributes
@@ -444,15 +439,15 @@ class Comparer implements ComparerInterface
         $localForeignKeys = $this->collectLocalForeignKeys($before)
                           + $this->collectLocalForeignKeys($after);
 
-        $attributesBefore = array_except(array_get($before, 'attributes', []), $localForeignKeys);
-        $attributesAfter  = array_except(array_get($after, 'attributes', []), $localForeignKeys);
+        $attributesBefore = Arr::except(Arr::get($before, 'attributes', []), $localForeignKeys);
+        $attributesAfter  = Arr::except(Arr::get($after, 'attributes', []), $localForeignKeys);
 
         $attributeDiff = $this->buildAttributesDifferenceList($attributesBefore, $attributesAfter);
 
         // Check relations
         $relationDiff = $this->buildRelationsDifferenceList(
-            array_get($before, 'relations', []),
-            array_get($after, 'relations', [])
+            Arr::get($before, 'relations', []),
+            Arr::get($after, 'relations', [])
         );
 
         return new Data\ModelDifference($modelClass, $attributeDiff, $relationDiff);
@@ -465,7 +460,7 @@ class Comparer implements ComparerInterface
      * @param array|mixed $after    if not an array, model difference should not be tracked
      * @return Data\PivotDifference
      */
-    protected function buildPivotDifference($before, $after)
+    protected function buildPivotDifference($before, $after): Data\PivotDifference
     {
         // If ignored, return empty difference
         if ( ! is_array($before) || ! is_array($after)) {
@@ -484,7 +479,7 @@ class Comparer implements ComparerInterface
      * @param array $after
      * @return Data\DifferenceCollection
      */
-    protected function buildAttributesDifferenceList(array $before, array $after)
+    protected function buildAttributesDifferenceList(array $before, array $after): Data\DifferenceCollection
     {
         $differences = new Data\DifferenceCollection;
 
@@ -519,7 +514,7 @@ class Comparer implements ComparerInterface
      * @param array $after
      * @return Data\DifferenceCollection
      */
-    protected function buildRelationsDifferenceList(array $before, array $after)
+    protected function buildRelationsDifferenceList(array $before, array $after): Data\DifferenceCollection
     {
         $differences = new Data\DifferenceCollection;
 
@@ -551,14 +546,14 @@ class Comparer implements ComparerInterface
      */
     protected function getRelationDifference(array $before, array $after)
     {
-        $method = array_get($before, 'method');
-        $type   = array_get($before, 'type');
-        $single = array_get($before, 'single', true);
-        $morph  = array_get($before, 'morph', true);
-        $pivot  = array_get($before, 'pivot', false);
+        $method = Arr::get($before, 'method');
+        $type   = Arr::get($before, 'type');
+        $single = Arr::get($before, 'single', true);
+        $morph  = Arr::get($before, 'morph', true);
+        $pivot  = Arr::get($before, 'pivot', false);
 
-        $beforeItems = array_get($before, 'items', []);
-        $afterItems  = array_get($after, 'items', []);
+        $beforeItems = Arr::get($before, 'items', []);
+        $afterItems  = Arr::get($after, 'items', []);
 
         if ($single) {
 
@@ -570,7 +565,7 @@ class Comparer implements ComparerInterface
             if ( ! count($beforeItems)) {
 
                 $key = head(array_keys($afterItems));
-                list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
+                [$key, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
                 $modelClass = $class ?: $afterItems[ $key ]['class'];
 
@@ -578,7 +573,7 @@ class Comparer implements ComparerInterface
                 if ($this->wasModelCreated($modelClass, $key)) {
                     $difference = new Data\ModelCreatedDifference(
                         $modelClass,
-                        $this->buildAttributesDifferenceList([], array_get($afterItems[ $key ], 'attributes', [])),
+                        $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $key ], 'attributes', [])),
                         new Data\DifferenceCollection
                     );
                 }
@@ -588,7 +583,7 @@ class Comparer implements ComparerInterface
             } elseif ( ! count($afterItems)) {
 
                 $key = head(array_keys($beforeItems));
-                list($key, $class) = $this->getKeyAndClassFromReference($key, $morph);
+                [$key, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
                 $modelClass = $class ?: $beforeItems[ $key ]['class'];
                 $deleted = $this->wasModelDeleted($modelClass, $key);
@@ -614,14 +609,14 @@ class Comparer implements ComparerInterface
                         return false;
                     }
 
-                    list($keyOnlyBefore, $classBefore) = $this->getKeyAndClassFromReference($keyBefore, $morph);
+                    [$keyOnlyBefore, $classBefore] = $this->getKeyAndClassFromReference($keyBefore, $morph);
 
                     $difference = new Data\RelatedChangedDifference($keyOnlyBefore, $classBefore, $difference);
 
                 } else {
                     // The model related before was replaced by another
-                    list($keyOnlyBefore, $classBefore) = $this->getKeyAndClassFromReference($keyBefore, $morph);
-                    list($keyOnlyAfter, $classAfter)   = $this->getKeyAndClassFromReference($keyAfter, $morph);
+                    [$keyOnlyBefore, $classBefore] = $this->getKeyAndClassFromReference($keyBefore, $morph);
+                    [$keyOnlyAfter, $classAfter] = $this->getKeyAndClassFromReference($keyAfter, $morph);
 
                     $modelClass = $classAfter ?: $afterItems[ $keyAfter ]['class'];
 
@@ -629,7 +624,7 @@ class Comparer implements ComparerInterface
                     if ($this->wasModelCreated($modelClass, $keyOnlyAfter)) {
                         $difference = new Data\ModelCreatedDifference(
                             $classAfter ?: $afterItems[ $keyAfter ]['class'],
-                            $this->buildAttributesDifferenceList([], array_get($afterItems[ $keyAfter ], 'attributes', [])),
+                            $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $keyAfter ], 'attributes', [])),
                             new Data\DifferenceCollection
                         );
                     } else {
@@ -666,7 +661,7 @@ class Comparer implements ComparerInterface
         $removedKeys = array_diff(array_keys($beforeItems), array_keys($afterItems));
         foreach ($removedKeys as $key) {
 
-            list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
+            [$keyOnly, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
             $modelClass = $class ?: $beforeItems[ $key ]['class'];
 
@@ -679,7 +674,7 @@ class Comparer implements ComparerInterface
         $addedKeys = array_diff(array_keys($afterItems), array_keys($beforeItems));
         foreach ($addedKeys as $key) {
 
-            list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
+            [$keyOnly, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
             $modelClass = $class ?: $afterItems[ $key ]['class'];
 
@@ -687,7 +682,7 @@ class Comparer implements ComparerInterface
             if ($this->wasModelCreated($modelClass, $keyOnly)) {
                 $difference = new Data\ModelCreatedDifference(
                     $modelClass,
-                    $this->buildAttributesDifferenceList([], array_get($afterItems[ $keyOnly ], 'attributes', [])),
+                    $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $keyOnly ], 'attributes', [])),
                     new Data\DifferenceCollection
                 );
             }
@@ -711,7 +706,7 @@ class Comparer implements ComparerInterface
 
             if ($difference->isDifferent() || $pivotDifference && $pivotDifference->isDifferent()) {
 
-                list($keyOnly, $class) = $this->getKeyAndClassFromReference($key, $morph);
+                [$keyOnly, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
                 $differences->put($key, new Data\RelatedChangedDifference($keyOnly, $class, $difference, $pivotDifference));
             }
@@ -731,7 +726,7 @@ class Comparer implements ComparerInterface
      * @param bool   $morph
      * @return array    key, model class
      */
-    protected function getKeyAndClassFromReference($key, $morph = false)
+    protected function getKeyAndClassFromReference(string $key, bool $morph = false): array
     {
         $class = null;
 
@@ -747,15 +742,15 @@ class Comparer implements ComparerInterface
      *
      * @param mixed $before
      * @param mixed $after
-     * @return true|false|null  null if the difference is only loose.
+     * @return bool|null  null if the difference is only loose.
      */
-    protected function isAttributeValueEqual($before, $after)
+    protected function isAttributeValueEqual($before, $after): ?bool
     {
         // Determine the strategy
         $strategy = SimpleStrategy::class;
 
         /** @var CompareStrategyInterface $strategyInstance */
-        $strategyInstance = app($strategy);
+        $strategyInstance = App::make($strategy);
 
         return $strategyInstance->equal($before, $after, $this->strictComparison);
     }
@@ -766,12 +761,12 @@ class Comparer implements ComparerInterface
      * @param array $tree
      * @return string[]
      */
-    protected function collectLocalForeignKeys(array $tree)
+    protected function collectLocalForeignKeys(array $tree): array
     {
         $keys = [];
 
         foreach ($tree['relations'] as $relation) {
-            $keys += array_get($relation, 'foreign_keys', []);
+            $keys += Arr::get($relation, 'foreign_keys', []);
         }
 
         return array_unique($keys);
@@ -785,7 +780,7 @@ class Comparer implements ComparerInterface
     /**
      * Resets tracked data connected to the last before state set.
      */
-    protected function resetBeforeState()
+    protected function resetBeforeState(): void
     {
         $this->before = null;
         $this->createdSinceBeforeState = [];
@@ -799,7 +794,7 @@ class Comparer implements ComparerInterface
      * @param mixed  $key
      * @return bool
      */
-    protected function wasModelCreated($class, $key)
+    protected function wasModelCreated(string $class, $key): bool
     {
         if ( ! array_key_exists($class, $this->createdSinceBeforeState)) {
             return false;
@@ -815,7 +810,7 @@ class Comparer implements ComparerInterface
      * @param mixed  $key
      * @return bool
      */
-    protected function wasModelDeleted($class, $key)
+    protected function wasModelDeleted(string $class, $key): bool
     {
         if ( ! array_key_exists($class, $this->deletedSinceBeforeState)) {
             return false;
@@ -827,7 +822,7 @@ class Comparer implements ComparerInterface
     /**
      * Sets up listening for relevant model events.
      */
-    protected function listenForEvents()
+    protected function listenForEvents(): void
     {
         $this->events->listen(['eloquent.created: *'], function() {
 
@@ -880,7 +875,7 @@ class Comparer implements ComparerInterface
      *
      * @return $this
      */
-    protected function startListening()
+    protected function startListening(): ComparerInterface
     {
         $this->listening = true;
 
@@ -892,7 +887,7 @@ class Comparer implements ComparerInterface
      *
      * @return $this
      */
-    protected function stopListening()
+    protected function stopListening(): ComparerInterface
     {
         $this->listening = false;
 

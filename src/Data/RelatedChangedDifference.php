@@ -5,8 +5,6 @@ use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 use Czim\ModelComparer\Traits\ToArrayJsonable;
 
 /**
- * Class RelatedChangedDifference
- *
  * Difference rapport on a single related model for an Eloquent relation,
  * that was connected before but may have been changed.
  */
@@ -51,8 +49,12 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      * @param ModelDifference $difference
      * @param PivotDifference $pivotDifference
      */
-    public function __construct($key, $class, ModelDifference $difference, PivotDifference $pivotDifference = null)
-    {
+    public function __construct(
+        $key,
+        ?string $class,
+        ModelDifference $difference,
+        PivotDifference $pivotDifference = null
+    ) {
         $this->key             = $key;
         $this->class           = $class;
         $this->difference      = $difference;
@@ -74,7 +76,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return string|null
      */
-    public function getClass()
+    public function getClass(): ?string
     {
         return $this->class;
     }
@@ -84,7 +86,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return ModelDifference
      */
-    public function difference()
+    public function difference(): ModelDifference
     {
         return $this->difference;
     }
@@ -94,9 +96,9 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return bool
      */
-    public function isPivotRelated()
+    public function isPivotRelated(): bool
     {
-        return !! $this->pivotDifference;
+        return (bool) $this->pivotDifference;
     }
 
     /**
@@ -134,7 +136,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $difference = [];
 
@@ -154,7 +156,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return bool
      */
-    public function hasMessage()
+    public function hasMessage(): bool
     {
         return false;
     }
@@ -164,7 +166,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return string|null
      */
-    public function getMessage()
+    public function getMessage(): ?string
     {
         return null;
     }

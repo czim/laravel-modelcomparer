@@ -4,8 +4,6 @@ namespace Czim\ModelComparer\Data;
 use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
 
 /**
- * Class RelatedRemovedDifference
- *
  * Difference rapport for a related model that was removed for a plural relation.
  */
 class RelatedRemovedDifference extends AbstractRelatedDifference implements DifferenceLeafInterface
@@ -36,14 +34,15 @@ class RelatedRemovedDifference extends AbstractRelatedDifference implements Diff
 
 
     /**
-     * @param mixed|false $key      key for the previously related model
+     * @param mixed|false $key key for the previously related model
      * @param string|null $class
+     * @param bool        $deleted
      */
-    public function __construct($key, $class = null, $deleted = false)
+    public function __construct($key, ?string $class = null, bool $deleted = false)
     {
         $this->key     = $key;
         $this->class   = $class;
-        $this->deleted = (bool) $deleted;
+        $this->deleted = $deleted;
     }
 
     /**
@@ -61,7 +60,7 @@ class RelatedRemovedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return string|null
      */
-    public function getClass()
+    public function getClass(): ?string
     {
         return $this->class;
     }
@@ -87,15 +86,12 @@ class RelatedRemovedDifference extends AbstractRelatedDifference implements Diff
      *
      * @return bool
      */
-    public function wasDeleted()
+    public function wasDeleted(): bool
     {
         return $this->deleted;
     }
 
-    /**
-     * @return string
-     */
-    function __toString()
+    function __toString(): string
     {
         return 'No longer connected to '
              . ($this->deleted ? 'and deleted ' : null)

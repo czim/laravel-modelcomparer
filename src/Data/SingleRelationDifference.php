@@ -5,8 +5,6 @@ use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
 use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 
 /**
- * Class SingleRelationDifference
- *
  * Difference rapport on a singular Eloquent relation of a model.
  */
 class SingleRelationDifference extends AbstractRelationDifference
@@ -19,14 +17,9 @@ class SingleRelationDifference extends AbstractRelationDifference
      */
     protected $difference;
 
-    /**
-     * @param string                    $method
-     * @param string                    $type
-     * @param AbstractRelatedDifference $difference
-     */
-    public function __construct($method, $type, AbstractRelatedDifference $difference)
+    public function __construct(string $method, string $type, AbstractRelatedDifference $difference)
     {
-        parent::__construct($method, $type, false);
+        parent::__construct($method, $type);
 
         $this->difference = $difference;
     }
@@ -34,7 +27,7 @@ class SingleRelationDifference extends AbstractRelationDifference
     /**
      * @return AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface
      */
-    public function difference()
+    public function difference(): AbstractRelatedDifference
     {
         return $this->difference;
     }
@@ -44,7 +37,7 @@ class SingleRelationDifference extends AbstractRelationDifference
      *
      * @return bool
      */
-    public function hasMessage()
+    public function hasMessage(): bool
     {
         if ($this->difference instanceof DifferenceNodeInterface) {
             return $this->difference->hasMessage();
@@ -58,7 +51,7 @@ class SingleRelationDifference extends AbstractRelationDifference
      *
      * @return string|null
      */
-    public function getMessage()
+    public function getMessage(): ?string
     {
         if ($this->difference instanceof DifferenceNodeInterface) {
             return $this->difference->getMessage();
@@ -72,7 +65,7 @@ class SingleRelationDifference extends AbstractRelationDifference
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $difference = [];
 

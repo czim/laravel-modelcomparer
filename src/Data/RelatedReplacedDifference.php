@@ -2,8 +2,6 @@
 namespace Czim\ModelComparer\Data;
 
 /**
- * Class RelatedReplacedDifference
- *
  * Difference rapport on a single related model for an Eloquent relation,
  * that replaces a different previously connected model.
  */
@@ -32,8 +30,13 @@ class RelatedReplacedDifference extends RelatedChangedDifference
      * @param mixed       $keyBefore
      * @param string|null $classBefore
      */
-    public function __construct($key, $class, ModelDifference $difference, $keyBefore, $classBefore = null)
-    {
+    public function __construct(
+        $key,
+        ?string $class,
+        ModelDifference $difference,
+        $keyBefore,
+        ?string $classBefore = null
+    ) {
         parent::__construct($key, $class, $difference);
 
         $this->keyBefore   = $keyBefore;
@@ -55,7 +58,7 @@ class RelatedReplacedDifference extends RelatedChangedDifference
      *
      * @return string|null
      */
-    public function getClassBefore()
+    public function getClassBefore(): ?string
     {
         return $this->classBefore;
     }
@@ -81,7 +84,7 @@ class RelatedReplacedDifference extends RelatedChangedDifference
      *
      * @return bool
      */
-    public function hasMessage()
+    public function hasMessage(): bool
     {
         return true;
     }
@@ -91,7 +94,7 @@ class RelatedReplacedDifference extends RelatedChangedDifference
      *
      * @return string|null
      */
-    public function getMessage()
+    public function getMessage(): ?string
     {
         return 'Replaced '
             . ($this->classBefore ? $this->classBefore . ' ' : null) . '#' . $this->keyBefore

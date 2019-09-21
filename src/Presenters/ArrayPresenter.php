@@ -13,8 +13,6 @@ use Czim\ModelComparer\Data\RelatedChangedDifference;
 use Czim\ModelComparer\Data\SingleRelationDifference;
 
 /**
- * Class ArrayPresenter
- *
  * Returns difference as a nested array.
  */
 class ArrayPresenter implements DifferencePresenterInterface
@@ -26,7 +24,7 @@ class ArrayPresenter implements DifferencePresenterInterface
      * @param ModelDifference $difference
      * @return array
      */
-    public function present(ModelDifference $difference)
+    public function present(ModelDifference $difference): array
     {
         if ( ! $difference->isDifferent()) {
             return [];
@@ -35,11 +33,7 @@ class ArrayPresenter implements DifferencePresenterInterface
         return $this->convertModelDifference($difference);
     }
 
-    /**
-     * @param ModelDifference $difference
-     * @return array
-     */
-    protected function convertModelDifference(ModelDifference $difference)
+    protected function convertModelDifference(ModelDifference $difference): array
     {
         $output = [];
 
@@ -56,22 +50,16 @@ class ArrayPresenter implements DifferencePresenterInterface
         return $output;
     }
 
-    /**
-     * @param DifferenceCollection $attributes
-     * @return array
-     */
-    protected function convertAttributes(DifferenceCollection $attributes)
+    protected function convertAttributes(DifferenceCollection $attributes): array
     {
-        return $attributes->transform(function (AttributeDifference $difference) {
-            return (string) $difference;
-        })->toArray();
+        return $attributes->transform(
+            static function (AttributeDifference $difference) {
+                return (string) $difference;
+            }
+        )->toArray();
     }
 
-    /**
-     * @param DifferenceCollection $relations
-     * @return array
-     */
-    protected function convertRelations(DifferenceCollection $relations)
+    protected function convertRelations(DifferenceCollection $relations): array
     {
         $output = [];
 
@@ -102,11 +90,7 @@ class ArrayPresenter implements DifferencePresenterInterface
         return $output;
     }
 
-    /**
-     * @param AbstractRelatedDifference $difference
-     * @return array
-     */
-    protected function convertRelatedDifference(AbstractRelatedDifference $difference)
+    protected function convertRelatedDifference(AbstractRelatedDifference $difference): array
     {
         $output = [];
 

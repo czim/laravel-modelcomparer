@@ -12,6 +12,6 @@ interface CompareStrategyInterface
      * @param bool  $strict     whether to only consider strict sameness
      * @return bool
      */
-    public function equal($before, $after, $strict = false);
+    public function equal($before, $after, bool $strict = false): bool;
 
 }

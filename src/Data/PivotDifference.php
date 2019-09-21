@@ -6,8 +6,6 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 
 /**
- * Class PivotDifference
- *
  * Difference rapport on a pivot table for an Eloquent relation.
  */
 class PivotDifference implements Arrayable, Jsonable
@@ -22,9 +20,6 @@ class PivotDifference implements Arrayable, Jsonable
     protected $attributes;
 
 
-    /**
-     * @param DifferenceCollection $attributes
-     */
     public function __construct(DifferenceCollection $attributes)
     {
         $this->attributes = $attributes;
@@ -32,9 +27,10 @@ class PivotDifference implements Arrayable, Jsonable
 
     /**
      * Returns whether there are any differences at all.
+     *
      * @return bool
      */
-    public function isDifferent()
+    public function isDifferent(): bool
     {
         return count($this->attributes) > 0;
     }
@@ -42,7 +38,7 @@ class PivotDifference implements Arrayable, Jsonable
     /**
      * @return AttributeDifference[]|DifferenceCollection
      */
-    public function attributes()
+    public function attributes(): DifferenceCollection
     {
         return $this->attributes;
     }
@@ -52,14 +48,14 @@ class PivotDifference implements Arrayable, Jsonable
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         if ( ! count($this->attributes)) {
             return [];
         }
 
         return array_map(
-            function (AttributeDifference $item) {
+            static function (AttributeDifference $item) {
                 return (string) $item;
             },
             $this->attributes->toArray()

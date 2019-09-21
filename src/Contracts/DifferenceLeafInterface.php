@@ -7,6 +7,6 @@ interface DifferenceLeafInterface
     /**
      * @return mixed
      */
-    public function __toString();
+    public function __toString(): string;
 
 }

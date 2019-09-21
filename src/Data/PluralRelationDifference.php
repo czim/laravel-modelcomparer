@@ -5,8 +5,6 @@ use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
 use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 
 /**
- * Class PluralRelationDifference
- *
  * Difference rapport on a plural Eloquent relation of a model.
  */
 class PluralRelationDifference extends AbstractRelationDifference
@@ -24,12 +22,8 @@ class PluralRelationDifference extends AbstractRelationDifference
      */
     protected $related;
 
-    /**
-     * @param string               $method
-     * @param string               $type
-     * @param DifferenceCollection $related
-     */
-    public function __construct($method, $type, DifferenceCollection $related)
+
+    public function __construct(string $method, string $type, DifferenceCollection $related)
     {
         parent::__construct($method, $type, true);
 
@@ -39,7 +33,7 @@ class PluralRelationDifference extends AbstractRelationDifference
     /**
      * @return DifferenceCollection|DifferenceLeafInterface[]|DifferenceNodeInterface[]
      */
-    public function related()
+    public function related(): DifferenceCollection
     {
         return $this->related;
     }
@@ -49,7 +43,7 @@ class PluralRelationDifference extends AbstractRelationDifference
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $difference = [];
 

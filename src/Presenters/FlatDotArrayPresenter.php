@@ -11,8 +11,6 @@ use Czim\ModelComparer\Data\RelatedChangedDifference;
 use Czim\ModelComparer\Data\SingleRelationDifference;
 
 /**
- * Class FlatDotArrayPresenter
- *
  * Returns difference as a flat, single-dimensional key-value pair array,
  * with dot notation keys for nested data.
  */
@@ -25,7 +23,7 @@ class FlatDotArrayPresenter implements DifferencePresenterInterface
      * @param ModelDifference $difference
      * @return array
      */
-    public function present(ModelDifference $difference)
+    public function present(ModelDifference $difference): array
     {
         if ( ! $difference->isDifferent()) {
             return [];
@@ -38,24 +36,22 @@ class FlatDotArrayPresenter implements DifferencePresenterInterface
         return $output;
     }
 
-    /**
-     * @param array           $output
-     * @param ModelDifference $difference
-     * @param string|null     $parentKey
-     */
-    protected function convertModelDifference(array &$output, ModelDifference $difference, $parentKey = null)
-    {
+    protected function convertModelDifference(
+        array &$output,
+        ModelDifference $difference,
+        ?string $parentKey = null
+    ): void {
+
         $this->convertAttributes($output, $difference->attributes(), $parentKey);
         $this->convertRelations($output, $difference->relations(), $parentKey);
     }
 
-    /**
-     * @param array                $output
-     * @param DifferenceCollection $attributes
-     * @param string|null          $parentKey
-     */
-    protected function convertAttributes(array &$output, DifferenceCollection $attributes, $parentKey = null)
-    {
+    protected function convertAttributes(
+        array &$output,
+        DifferenceCollection $attributes,
+        ?string $parentKey = null
+    ): void {
+
         $baseKey = $parentKey ? rtrim($parentKey, '.') . '.' : null;
 
         foreach ($attributes as $name => $attribute) {
@@ -63,13 +59,12 @@ class FlatDotArrayPresenter implements DifferencePresenterInterface
         }
     }
 
-    /**
-     * @param array                $output
-     * @param DifferenceCollection $relations
-     * @param string|null          $parentKey
-     */
-    protected function convertRelations(array &$output, DifferenceCollection $relations, $parentKey = null)
-    {
+    protected function convertRelations(
+        array &$output,
+        DifferenceCollection $relations,
+        ?string $parentKey = null
+    ): void {
+
         $baseKey = $parentKey ? rtrim($parentKey, '.') . '.' : null;
 
         foreach ($relations as $name => $relation) {
@@ -95,13 +90,12 @@ class FlatDotArrayPresenter implements DifferencePresenterInterface
         }
     }
 
-    /**
-     * @param array                     $output
-     * @param AbstractRelatedDifference $difference
-     * @param string|null               $parentKey
-     */
-    protected function convertRelatedDifference(array &$output, AbstractRelatedDifference $difference, $parentKey = null)
-    {
+    protected function convertRelatedDifference(
+        array &$output,
+        AbstractRelatedDifference $difference,
+        ?string $parentKey = null
+    ): void {
+
         $baseKey = $parentKey ? rtrim($parentKey, '.') . '.' : null;
 
         if ($difference instanceof DifferenceNodeInterface) {

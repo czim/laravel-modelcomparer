@@ -12,7 +12,7 @@ interface DifferenceNodeInterface extends Arrayable, Jsonable
      *
      * @return bool
      */
-    public function hasMessage();
+    public function hasMessage(): bool;
 
 
     /**
@@ -20,6 +20,6 @@ interface DifferenceNodeInterface extends Arrayable, Jsonable
      *
      * @return string|null
      */
-    public function getMessage();
+    public function getMessage(): ?string;
 
 }

@@ -13,7 +13,7 @@ interface ComparerInterface
      * @param bool $ignore
      * @return $this
      */
-    public function ignoreTimestamps($ignore = true);
+    public function ignoreTimestamps(bool $ignore = true): ComparerInterface;
 
     /**
      * Sets whether all comparison should be done strict.
@@ -21,14 +21,14 @@ interface ComparerInterface
      * @param bool $strict
      * @return $this
      */
-    public function useStrictComparison($strict = true);
+    public function useStrictComparison(bool $strict = true): ComparerInterface;
 
     /**
      * Sets comparisons to always be completed in full.
      *
      * @return $this
      */
-    public function alwaysCompareFully();
+    public function alwaysCompareFully(): ComparerInterface;
 
     /**
      * Set relation dot-notation strings for relations to fully compare recursively.
@@ -39,7 +39,7 @@ interface ComparerInterface
      * @param array $compareFully
      * @return $this
      */
-    public function setNestedCompareRelations(array $compareFully);
+    public function setNestedCompareRelations(array $compareFully): ComparerInterface;
 
     /**
      * Sets a list of attributes per model.
@@ -58,7 +58,7 @@ interface ComparerInterface
      * @param array        $ignored
      * @return $this
      */
-    public function setIgnoredAttributesForModel($model, array $ignored);
+    public function setIgnoredAttributesForModel($model, array $ignored): ComparerInterface;
 
 
     /**
@@ -67,14 +67,14 @@ interface ComparerInterface
      * @param Model $model
      * @return $this
      */
-    public function setBeforeState(Model $model);
+    public function setBeforeState(Model $model): ComparerInterface;
 
     /**
      * Clears any previously set before state.
      *
      * @return $this
      */
-    public function clearBeforeState();
+    public function clearBeforeState(): ComparerInterface;
 
     /**
      * Compares the earlier set before state with a new after state.
@@ -82,6 +82,6 @@ interface ComparerInterface
      * @param Model $model
      * @return ModelDifference
      */
-    public function compareWithBefore(Model $model);
+    public function compareWithBefore(Model $model): ModelDifference;
 
 }

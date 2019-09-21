@@ -6,8 +6,6 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
 
 /**
- * Class ModelDifference
- *
  * Difference rapport on an Eloquent relation of a model.
  */
 class ModelDifference implements Arrayable, Jsonable
@@ -36,12 +34,7 @@ class ModelDifference implements Arrayable, Jsonable
     protected $relations;
 
 
-    /**
-     * @param string               $class
-     * @param DifferenceCollection $attributes
-     * @param DifferenceCollection $relations
-     */
-    public function __construct($class, DifferenceCollection $attributes, DifferenceCollection $relations)
+    public function __construct(?string $class, DifferenceCollection $attributes, DifferenceCollection $relations)
     {
         $this->modelClass = $class;
         $this->attributes = $attributes;
@@ -51,16 +44,17 @@ class ModelDifference implements Arrayable, Jsonable
     /**
      * @return string
      */
-    public function modelClass()
+    public function modelClass(): string
     {
         return $this->modelClass;
     }
 
     /**
      * Returns whether there are any differences at all.
+     *
      * @return bool
      */
-    public function isDifferent()
+    public function isDifferent(): bool
     {
         return count($this->attributes) > 0 || count($this->relations) > 0;
     }
@@ -68,7 +62,7 @@ class ModelDifference implements Arrayable, Jsonable
     /**
      * @return AttributeDifference[]|DifferenceCollection
      */
-    public function attributes()
+    public function attributes(): DifferenceCollection
     {
         return $this->attributes;
     }
@@ -76,7 +70,7 @@ class ModelDifference implements Arrayable, Jsonable
     /**
      * @return AbstractRelationDifference[]|DifferenceCollection
      */
-    public function relations()
+    public function relations(): DifferenceCollection
     {
         return $this->relations;
     }
@@ -86,13 +80,13 @@ class ModelDifference implements Arrayable, Jsonable
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $difference = [];
 
         if (count($this->attributes)) {
             $difference['attributes'] = array_map(
-                function (AttributeDifference $item) {
+                static function (AttributeDifference $item) {
                     return (string) $item;
                 },
                 $this->attributes->toArray()

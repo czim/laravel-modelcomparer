@@ -45,18 +45,13 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
     protected $modelClass;
 
 
-    /**
-     * @param string $method
-     * @param string $type
-     * @param bool   $plural
-     */
-    public function __construct($method, $type, $plural = false)
+    public function __construct(string $method, string $type, bool $plural = false)
     {
         $this->method = $method;
         $this->type   = $type;
-        $this->plural = (bool) $plural;
+        $this->plural = $plural;
 
-        $this->isVariableModelClass = $type == MorphTo::class;
+        $this->isVariableModelClass = $type === MorphTo::class;
     }
 
     /**
@@ -65,7 +60,7 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
      * @param string|null $class
      * @return $this
      */
-    public function setModelClass($class)
+    public function setModelClass($class): AbstractRelationDifference
     {
         $this->modelClass = $class;
 
@@ -77,7 +72,7 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
      *
      * @return string|null
      */
-    public function modelClass()
+    public function modelClass(): ?string
     {
         if ($this->isVariableModelClass) {
             return null;
@@ -86,34 +81,22 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
         return $this->modelClass;
     }
 
-    /**
-     * @return string
-     */
-    public function method()
+    public function method(): string
     {
         return $this->method;
     }
 
-    /**
-     * @return string
-     */
-    public function type()
+    public function type(): string
     {
         return $this->type;
     }
 
-    /**
-     * @return bool
-     */
-    public function isPlural()
+    public function isPlural(): bool
     {
         return $this->plural;
     }
 
-    /**
-     * @return bool
-     */
-    public function hasVariableModelClass()
+    public function hasVariableModelClass(): bool
     {
         return $this->isVariableModelClass;
     }
@@ -123,7 +106,7 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
      *
      * @return bool
      */
-    public function hasMessage()
+    public function hasMessage(): bool
     {
         return false;
     }
@@ -133,10 +116,9 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
      *
      * @return string|null
      */
-    public function getMessage()
+    public function getMessage(): ?string
     {
         return null;
     }
-
 
 }

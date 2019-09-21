@@ -6,8 +6,6 @@ use Czim\ModelComparer\Traits\ToArrayJsonable;
 use Illuminate\Contracts\Support\Arrayable;
 
 /**
- * Class AttributeDifference
- *
  * Describes the before/after difference of model- or pivot table attributes
  * that show any sort of difference.
  */
@@ -50,8 +48,12 @@ class AttributeDifference implements DifferenceLeafInterface
      * @param bool  $beforeDoesNotExist
      * @param bool  $afterDoesNotExist
      */
-    public function __construct($before = null, $after = null, $beforeDoesNotExist = false, $afterDoesNotExist = false)
-    {
+    public function __construct(
+        $before = null,
+        $after = null,
+        bool $beforeDoesNotExist = false,
+        bool $afterDoesNotExist = false
+    ) {
         $this->before = $before;
         $this->after  = $after;
 
@@ -88,7 +90,7 @@ class AttributeDifference implements DifferenceLeafInterface
      *
      * @return bool
      */
-    public function didNotExistBefore()
+    public function didNotExistBefore(): bool
     {
         return $this->beforeDoesNotExist;
     }
@@ -98,7 +100,7 @@ class AttributeDifference implements DifferenceLeafInterface
      *
      * @return bool
      */
-    public function didNotExistAfter()
+    public function didNotExistAfter(): bool
     {
         return $this->afterDoesNotExist;
     }
@@ -107,7 +109,7 @@ class AttributeDifference implements DifferenceLeafInterface
      * @param mixed $before
      * @return $this
      */
-    public function setBefore($before)
+    public function setBefore($before): AttributeDifference
     {
         $this->before = $before;
 
@@ -118,7 +120,7 @@ class AttributeDifference implements DifferenceLeafInterface
      * @param mixed $after
      * @return $this
      */
-    public function setAfter($after)
+    public function setAfter($after): AttributeDifference
     {
         $this->after = $after;
 
@@ -130,7 +132,7 @@ class AttributeDifference implements DifferenceLeafInterface
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $difference = [];
 
@@ -150,7 +152,7 @@ class AttributeDifference implements DifferenceLeafInterface
      *
      * @return string
      */
-    public function __toString()
+    public function __toString(): string
     {
         $before = null;
         $after  = null;
@@ -181,7 +183,7 @@ class AttributeDifference implements DifferenceLeafInterface
      * @param string|null $enclose  enclosing symbol, if string values should be enclosed
      * @return string
      */
-    protected function normalizeToString($value, $enclose = '"')
+    protected function normalizeToString($value, ?string $enclose = '"'): string
     {
         if (null === $value) {
             return 'NULL';
