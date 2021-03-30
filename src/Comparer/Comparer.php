@@ -596,6 +596,11 @@ class Comparer implements ComparerInterface
                 $keyAfter  = head(array_keys($afterItems));
 
                 if ($keyBefore === $keyAfter) {
+                    // The before and after may be simple ID references, in which case there is no difference.
+                    if (is_scalar($beforeItems[$keyBefore])) {
+                        return false;
+                    }
+
                     // The same model is still related, but it may be altered
                     $modelClass = $afterItems[ $keyAfter ]['class'];
 
