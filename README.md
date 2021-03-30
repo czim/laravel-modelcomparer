@@ -16,12 +16,12 @@ The comparer instance tracks the changes and offers the means to create concise 
 
 ## Version Compatibility
 
- Laravel         | Package 
+ Laravel         | Package
 :----------------|:--------
  5.3 and older   | 0.9
  5.4 to 5.7      | 1.4
  5.8             | 1.5
- 6.0             | 2.0
+ 5.8, 6.0+       | 2.0
 
 
 ## Install
@@ -39,7 +39,7 @@ In your `config/app.php` config, add the service provider
 ```
 
 
-## Usage 
+## Usage
 
 1. Initialize a comparer instance
 2. Before making changes, set the before state on the comparer by passing in the model
@@ -61,7 +61,7 @@ The result is an comparison information object that stores all the changes and o
         - And, singleton should delegate this to currently active comparers
     - Track changes of a model when it is still via-via related before AND after (but for a different intermediary relation)
     - Allow manually 'loading in' before state for a to-be related model
-  
+
 
 ## Contributing
 
