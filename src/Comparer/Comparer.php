@@ -570,7 +570,7 @@ class Comparer implements ComparerInterface
                 $modelClass = $class ?: $afterItems[ $key ]['class'];
 
                 $difference = null;
-                if ($this->wasModelCreated($modelClass, $key)) {
+                if ($modelClass !== null && $this->wasModelCreated($modelClass, $key)) {
                     $difference = new Data\ModelCreatedDifference(
                         $modelClass,
                         $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $key ], 'attributes', [])),
@@ -586,7 +586,7 @@ class Comparer implements ComparerInterface
                 [$key, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
                 $modelClass = $class ?: $beforeItems[ $key ]['class'];
-                $deleted = $this->wasModelDeleted($modelClass, $key);
+                $deleted = $modelClass !== null && $this->wasModelDeleted($modelClass, $key);
 
                 $difference = new Data\RelatedRemovedDifference($key, $class, $deleted);
 
