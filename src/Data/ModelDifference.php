@@ -36,7 +36,7 @@ class ModelDifference implements Arrayable, Jsonable
 
     public function __construct(?string $class, DifferenceCollection $attributes, DifferenceCollection $relations)
     {
-        $this->modelClass = $class;
+        $this->modelClass = $class ?? '';
         $this->attributes = $attributes;
         $this->relations  = $relations;
     }

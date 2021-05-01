@@ -567,9 +567,16 @@ class Comparer implements ComparerInterface
                 $key = head(array_keys($afterItems));
                 [$key, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
-                $modelClass = $class ?: $afterItems[ $key ]['class'];
-
                 $difference = null;
+
+                // It may be the case that the items list is just a list of keys, not an array with nested data.
+                // This occurs when the relationship is considered outside of the scope of nested compare relations.
+                if (is_scalar($afterItems[ $key ])) {
+                    $modelClass = null;
+                } else {
+                    $modelClass = $class ?: $afterItems[ $key ]['class'];
+                }
+
                 if ($modelClass !== null && $this->wasModelCreated($modelClass, $key)) {
                     $difference = new Data\ModelCreatedDifference(
                         $modelClass,
@@ -585,7 +592,13 @@ class Comparer implements ComparerInterface
                 $key = head(array_keys($beforeItems));
                 [$key, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
-                $modelClass = $class ?: $beforeItems[ $key ]['class'];
+                // It may be the case that the items list is just a list of keys, not an array with nested data.
+                if (is_scalar($beforeItems[ $key ])) {
+                    $modelClass = null;
+                } else {
+                    $modelClass = $class ?: $beforeItems[ $key ]['class'];
+                }
+
                 $deleted = $modelClass !== null && $this->wasModelDeleted($modelClass, $key);
 
                 $difference = new Data\RelatedRemovedDifference($key, $class, $deleted);
@@ -596,7 +609,8 @@ class Comparer implements ComparerInterface
                 $keyAfter  = head(array_keys($afterItems));
 
                 if ($keyBefore === $keyAfter) {
-                    // The before and after may be simple ID references, in which case there is no difference.
+                    // It may be the case that the items list is just a list of keys, not an array with nested data.
+                    // In that case there is no difference.
                     if (is_scalar($beforeItems[$keyBefore])) {
                         return false;
                     }
@@ -623,18 +637,23 @@ class Comparer implements ComparerInterface
                     [$keyOnlyBefore, $classBefore] = $this->getKeyAndClassFromReference($keyBefore, $morph);
                     [$keyOnlyAfter, $classAfter] = $this->getKeyAndClassFromReference($keyAfter, $morph);
 
-                    $modelClass = $classAfter ?: $afterItems[ $keyAfter ]['class'];
+                    // It may be the case that the items list is just a list of keys, not an array with nested data.
+                    if (is_scalar($afterItems[$keyAfter])) {
+                        $modelClass = null;
+                    } else {
+                        $modelClass = $classAfter ?: $afterItems[ $keyAfter ]['class'];
+                    }
 
                     // If the newly added model was created, track this as the difference
-                    if ($this->wasModelCreated($modelClass, $keyOnlyAfter)) {
+                    if ($modelClass !== null && $this->wasModelCreated($modelClass, $keyOnlyAfter)) {
                         $difference = new Data\ModelCreatedDifference(
-                            $classAfter ?: $afterItems[ $keyAfter ]['class'],
+                            $classAfter ?: $modelClass,
                             $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $keyAfter ], 'attributes', [])),
                             new Data\DifferenceCollection
                         );
                     } else {
                         $difference = new Data\ModelDifference(
-                            $classAfter ?: $afterItems[ $keyAfter ]['class'],
+                            $classAfter ?: $modelClass,
                             new Data\DifferenceCollection,
                             new Data\DifferenceCollection
                         );
