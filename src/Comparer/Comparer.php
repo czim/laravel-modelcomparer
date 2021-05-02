@@ -1,16 +1,13 @@
 <?php
 namespace Czim\ModelComparer\Comparer;
 
-use Czim\ModelComparer\Comparer\Strategies\SimpleStrategy;
 use Czim\ModelComparer\Contracts\ComparerInterface;
 use Czim\ModelComparer\Contracts\CompareStrategyFactoryInterface;
-use Czim\ModelComparer\Contracts\CompareStrategyInterface;
 use Czim\ModelComparer\Data;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Str;
 use RuntimeException;
 
