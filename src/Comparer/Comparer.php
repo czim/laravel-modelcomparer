@@ -687,9 +687,13 @@ class Comparer implements ComparerInterface
 
             [$keyOnly, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
-            $modelClass = $class ?: $beforeItems[ $key ]['class'];
+            if (is_scalar($beforeItems[$key])) {
+                $modelClass = null;
+            } else {
+                $modelClass = $class ?: $beforeItems[ $key ]['class'];
+            }
 
-            $deleted = $this->wasModelDeleted($modelClass, $keyOnly);
+            $deleted = $modelClass !== null && $this->wasModelDeleted($modelClass, $keyOnly);
 
             $differences->put($key, new Data\RelatedRemovedDifference($keyOnly, $class, $deleted));
         }
@@ -700,10 +704,14 @@ class Comparer implements ComparerInterface
 
             [$keyOnly, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
-            $modelClass = $class ?: $afterItems[ $key ]['class'];
+            if (is_scalar($afterItems[$key])) {
+                $modelClass = null;
+            } else {
+                $modelClass = $class ?: $afterItems[ $key ]['class'];
+            }
 
             $difference = null;
-            if ($this->wasModelCreated($modelClass, $keyOnly)) {
+            if ($modelClass !== null && $this->wasModelCreated($modelClass, $keyOnly)) {
                 $difference = new Data\ModelCreatedDifference(
                     $modelClass,
                     $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $keyOnly ], 'attributes', [])),
@@ -718,18 +726,21 @@ class Comparer implements ComparerInterface
         $relatedKeys = array_intersect(array_keys($beforeItems), array_keys($afterItems));
         foreach ($relatedKeys as $key) {
 
-            $modelClass = $beforeItems[$key]['class'];
+            if (is_scalar($beforeItems[$key])) {
+                $modelClass = null;
+            } else {
+                $modelClass = $beforeItems[ $key ]['class'];
+            }
 
             $difference      = $this->buildDifferenceTree($modelClass, $beforeItems[$key], $afterItems[$key]);
             $pivotDifference = null;
 
             // For pivot-based relations, check the pivot differences
-            if ($pivot) {
+            if ($pivot && ! is_scalar($beforeItems[$key])) {
                 $pivotDifference = $this->buildPivotDifference($beforeItems[$key]['pivot'], $afterItems[$key]['pivot']);
             }
 
             if ($difference->isDifferent() || $pivotDifference && $pivotDifference->isDifferent()) {
-
                 [$keyOnly, $class] = $this->getKeyAndClassFromReference($key, $morph);
 
                 $differences->put($key, new Data\RelatedChangedDifference($keyOnly, $class, $difference, $pivotDifference));
