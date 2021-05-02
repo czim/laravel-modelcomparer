@@ -1,11 +1,11 @@
 <?php
+
 namespace Czim\ModelComparer\Comparer\Strategies;
 
 use Czim\ModelComparer\Contracts\CompareStrategyInterface;
 
 class SimpleStrategy implements CompareStrategyInterface
 {
-
     /**
      * Returns whether two values are equal.
      *
@@ -23,5 +23,4 @@ class SimpleStrategy implements CompareStrategyInterface
         /** @noinspection TypeUnsafeComparisonInspection */
         return $before == $after;
     }
-
 }

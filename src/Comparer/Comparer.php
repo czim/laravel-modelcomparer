@@ -3,6 +3,7 @@ namespace Czim\ModelComparer\Comparer;
 
 use Czim\ModelComparer\Comparer\Strategies\SimpleStrategy;
 use Czim\ModelComparer\Contracts\ComparerInterface;
+use Czim\ModelComparer\Contracts\CompareStrategyFactoryInterface;
 use Czim\ModelComparer\Contracts\CompareStrategyInterface;
 use Czim\ModelComparer\Data;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,11 @@ class Comparer implements ComparerInterface
      * @var \Illuminate\Contracts\Events\Dispatcher
      */
     protected $events;
+
+    /**
+     * @var CompareStrategyFactoryInterface
+     */
+    protected $strategyFactory;
 
     /**
      * Before state as a normalized tree.
@@ -108,7 +114,8 @@ class Comparer implements ComparerInterface
 
     public function __construct()
     {
-        $this->events = app('events');
+        $this->events          = app('events');
+        $this->strategyFactory = app(CompareStrategyFactoryInterface::class);
 
         $this->listenForEvents();
     }
@@ -781,11 +788,7 @@ class Comparer implements ComparerInterface
      */
     protected function isAttributeValueEqual($before, $after): ?bool
     {
-        // Determine the strategy
-        $strategy = SimpleStrategy::class;
-
-        /** @var CompareStrategyInterface $strategyInstance */
-        $strategyInstance = App::make($strategy);
+        $strategyInstance = $this->strategyFactory->make($before, $after);
 
         return $strategyInstance->equal($before, $after, $this->strictComparison);
     }

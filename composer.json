@@ -21,6 +21,7 @@
         "ext-json": "*"
     },
     "require-dev": {
+        "czim/laravel-paperclip": "*",
         "phpunit/phpunit": "^7.0|^8.0",
         "orchestra/testbench": "^3.0|^4.0",
         "orchestra/database": "^3.0|^4.0"
