@@ -1,18 +1,20 @@
 <?php
 namespace Czim\ModelComparer\Test;
 
+use Czim\ModelComparer\ModelComparerServiceProvider;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
-
     /**
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function getEnvironmentSetUp($app): void
     {
         parent::getEnvironmentSetUp($app);
+
+        $app->register(ModelComparerServiceProvider::class);
 
         // Setup default database to use sqlite :memory:
         $app['config']->set('database.default', 'testbench');
@@ -23,14 +25,12 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
         ]);
     }
 
-
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->migrateDatabase();
     }
-
 
     protected function migrateDatabase(): void
     {
@@ -79,5 +79,4 @@ abstract class TestCase extends \Orchestra\Testbench\TestCase
             $table->primary(['test_related_alpha_id', 'test_related_beta_id'], 'tratrb_primary');
         });
     }
-
 }
