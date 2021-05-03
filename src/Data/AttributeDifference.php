@@ -2,8 +2,8 @@
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
+use Czim\ModelComparer\Contracts\ValueStringifierInterface;
 use Czim\ModelComparer\Traits\ToArrayJsonable;
-use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * Describes the before/after difference of model- or pivot table attributes
@@ -137,11 +137,11 @@ class AttributeDifference implements DifferenceLeafInterface
         $difference = [];
 
         if ( ! $this->beforeDoesNotExist) {
-            $difference['before'] = $this->normalizeToString($this->before, false);
+            $difference['before'] = $this->normalizeToString($this->before, null);
         }
 
         if ( ! $this->afterDoesNotExist) {
-            $difference['after'] = $this->normalizeToString($this->after, false);
+            $difference['after'] = $this->normalizeToString($this->after, null);
         }
 
         return $difference;
@@ -185,37 +185,6 @@ class AttributeDifference implements DifferenceLeafInterface
      */
     protected function normalizeToString($value, ?string $enclose = '"'): string
     {
-        if (null === $value) {
-            return 'NULL';
-        }
-
-        if (false === $value) {
-            return 'FALSE';
-        }
-
-        if (true === $value) {
-            return 'TRUE';
-        }
-
-        if (is_numeric($value)) {
-            return $value;
-        }
-
-        if ($value instanceof Arrayable) {
-            $value = $value->toArray();
-        }
-
-        if (is_array($value)) {
-            return json_encode($value);
-        }
-
-        $value = (string) $value;
-
-        if ( ! $enclose) {
-            return $value;
-        }
-
-        return $enclose . $value . $enclose;
+        return app(ValueStringifierInterface::class)->make($value, $enclose);
     }
-
 }
