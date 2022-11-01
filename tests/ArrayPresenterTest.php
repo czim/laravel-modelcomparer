@@ -1,6 +1,6 @@
 <?php
-/** @noinspection ReturnTypeCanBeDeclaredInspection */
-/** @noinspection AccessModifierPresentedInspection */
+
+declare(strict_types=1);
 
 namespace Czim\ModelComparer\Test;
 
@@ -26,7 +26,7 @@ class ArrayPresenterTest extends TestCase
     /**
      * @test
      */
-    function it_presents_simple_attribute_changes()
+    public function it_presents_simple_attribute_changes(): void
     {
         $difference = new ModelDifference(
             TestModel::class,
@@ -53,7 +53,7 @@ class ArrayPresenterTest extends TestCase
     /**
      * @test
      */
-    function it_presents_complex_attribute_changes()
+    public function it_presents_complex_attribute_changes(): void
     {
         $difference = new ModelDifference(
             TestModel::class,
@@ -167,5 +167,4 @@ class ArrayPresenterTest extends TestCase
         static::assertStringContainsString('created', $output['relations.testRelation4.related']);
         static::assertStringContainsString('deleted', $output['relations.testRelation5.related']);
     }
-
 }

@@ -1,6 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Test\Helpers;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -8,15 +12,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 /**
  * @property integer $id
  * @property string  $name
- * @property integer integer
+ * @property int     $integer
  * @property float   $float
  * @property string  $text
  * @property bool    $boolean
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
+ * @property Carbon  $created_at
+ * @property Carbon  $updated_at
  */
 class TestModel extends Model
 {
+    /**
+     * @var string[]
+     */
     protected $fillable = [
         'name',
         'integer',
@@ -26,10 +33,13 @@ class TestModel extends Model
         'test_related_model_id',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
-        'integer' => 'integer',
+        'integer' => 'int',
         'float'   => 'float',
-        'boolean' => 'boolean',
+        'boolean' => 'bool',
     ];
 
     public function testRelatedModel(): BelongsTo
@@ -41,5 +51,4 @@ class TestModel extends Model
     {
         return $this->belongsToMany(TestRelatedAlpha::class);
     }
-
 }

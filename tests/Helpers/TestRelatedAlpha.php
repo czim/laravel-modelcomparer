@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Test\Helpers;
 
 use Illuminate\Database\Eloquent\Model;
@@ -12,10 +15,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 class TestRelatedAlpha extends Model
 {
+    /**
+     * @var string[]
+     */
     protected $fillable = [
         'name',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'flag' => 'boolean',
     ];

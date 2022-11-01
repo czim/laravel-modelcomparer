@@ -1,6 +1,6 @@
 <?php
-/** @noinspection ReturnTypeCanBeDeclaredInspection */
-/** @noinspection AccessModifierPresentedInspection */
+
+declare(strict_types=1);
 
 namespace Czim\ModelComparer\Test;
 
@@ -23,7 +23,6 @@ use Czim\ModelComparer\Test\Helpers\TestRelatedModel;
 
 class ComparerTest extends TestCase
 {
-
     // ------------------------------------------------------------------------------
     //      Simple comparison
     // ------------------------------------------------------------------------------
@@ -31,7 +30,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_no_changes_at_all()
+    public function it_compares_a_model_with_no_changes_at_all(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -39,7 +38,7 @@ class ComparerTest extends TestCase
         $model = TestModel::first();
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $difference = $comparer->compareWithBefore($model);
@@ -53,7 +52,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_only_attribute_changes()
+    public function it_compares_a_model_with_only_attribute_changes(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -61,7 +60,7 @@ class ComparerTest extends TestCase
         $model = TestModel::first();
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->integer = 5;
@@ -106,7 +105,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_only_relation_changes()
+    public function it_compares_a_model_with_only_relation_changes(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -115,7 +114,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
 
@@ -137,7 +136,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_both_attribute_and_relation_changes()
+    public function it_compares_a_model_with_both_attribute_and_relation_changes(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -146,7 +145,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->integer = 5;
@@ -175,7 +174,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_a_removed_belongs_to_relation()
+    public function it_compares_a_model_with_a_removed_belongs_to_relation(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -184,7 +183,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->testRelatedModel()->dissociate();
@@ -201,7 +200,7 @@ class ComparerTest extends TestCase
         static::assertFalse($object->isPlural(), 'Should be singular relation');
         static::assertFalse($object->hasVariableModelClass(), 'Should not have variable model class');
         static::assertTrue($object->hasMessage(), 'hasMessage() should be true');
-        static::assertRegExp('/#1/', $object->getMessage(), 'getMessage() is not as expected');
+        static::assertMatchesRegularExpression('/#1/', $object->getMessage(), 'getMessage() is not as expected');
         static::assertInstanceOf(RelatedRemovedDifference::class, $object = $object->difference());
         /** @var RelatedRemovedDifference $object */
         static::assertEquals(1, $object->getKey(), 'Removed key should be 1');
@@ -211,7 +210,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_an_added_belongs_to_relation()
+    public function it_compares_a_model_with_an_added_belongs_to_relation(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -224,7 +223,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->testRelatedModel()->associate(TestRelatedModel::first());
@@ -241,7 +240,7 @@ class ComparerTest extends TestCase
         static::assertFalse($object->isPlural(), 'Should be singular relation');
         static::assertFalse($object->hasVariableModelClass(), 'Should not have variable model class');
         static::assertTrue($object->hasMessage(), 'hasMessage() should be true');
-        static::assertRegExp('/#1/', $object->getMessage(), 'getMessage() is not as expected');
+        static::assertMatchesRegularExpression('/#1/', $object->getMessage(), 'getMessage() is not as expected');
         static::assertInstanceOf(RelatedAddedDifference::class, $object = $object->difference());
         /** @var RelatedAddedDifference $object */
         static::assertEquals(1, $object->getKey(), 'Removed key should be 1');
@@ -251,7 +250,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_a_replaced_belongs_to_relation()
+    public function it_compares_a_model_with_a_replaced_belongs_to_relation(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -260,7 +259,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->testRelatedModel()->associate(TestRelatedModel::orderBy('id', 'desc')->first());
@@ -279,7 +278,7 @@ class ComparerTest extends TestCase
         static::assertFalse($object->isPlural(), 'Should be singular relation');
         static::assertFalse($object->hasVariableModelClass(), 'Should not have variable model class');
         static::assertTrue($object->hasMessage(), 'hasMessage() should be true');
-        static::assertRegExp('/#1/', $object->getMessage(), 'getMessage() is not as expected');
+        static::assertMatchesRegularExpression('/#1/', $object->getMessage(), 'getMessage() is not as expected');
         static::assertInstanceOf(RelatedReplacedDifference::class, $object = $object->difference());
         /** @var RelatedReplacedDifference $object */
         static::assertEquals(2, $object->getKey(), 'New key should be 1');
@@ -291,7 +290,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_the_same_belongs_to_relation_with_changes_to_the_related_model()
+    public function it_compares_a_model_with_the_same_belongs_to_relation_with_changes_to_the_related_model(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -300,7 +299,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         /** @var TestRelatedModel $relatedModel */
@@ -342,7 +341,7 @@ class ComparerTest extends TestCase
      *
      * @test
      */
-    function it_compares_a_model_with_relation_changes_for_has_many_relation_with_removed_related_record()
+    public function it_compares_a_model_with_relation_changes_for_has_many_relation_with_removed_related_record(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -351,7 +350,7 @@ class ComparerTest extends TestCase
         $model = TestRelatedModel::first()->load('testModels');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->testModels()->first()->testRelatedModel()->dissociate()->save();
@@ -378,7 +377,7 @@ class ComparerTest extends TestCase
      *
      * @test
      */
-    function it_compares_a_model_with_relation_changes_for_has_many_relation_with_added_related_record()
+    public function it_compares_a_model_with_relation_changes_for_has_many_relation_with_added_related_record(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -391,7 +390,7 @@ class ComparerTest extends TestCase
         $model->load('testModels');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $removedModel->testRelatedModel()->associate($model->id)->save();
@@ -416,7 +415,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_relation_changes_for_has_many_relation_with_changed_related_record()
+    public function it_compares_a_model_with_relation_changes_for_has_many_relation_with_changed_related_record(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -425,7 +424,7 @@ class ComparerTest extends TestCase
         $model = TestRelatedModel::first()->load('testModels');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         /** @var TestRelatedModel $related */
@@ -458,7 +457,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_changed_belongs_to_many_connections()
+    public function it_compares_a_model_with_changed_belongs_to_many_connections(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -470,7 +469,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedAlphas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
 
@@ -500,7 +499,7 @@ class ComparerTest extends TestCase
         static::assertEquals(3, $object->getKey(), 'Related added key does not match');
         static::assertNull($object->getClass(), 'Related added class does not match');
         static::assertTrue($object->hasMessage(), 'Related added should have a message');
-        static::assertRegExp('/#3/', $object->getMessage(), 'Related added getMessage() is not as expected');
+        static::assertMatchesRegularExpression('/#3/', $object->getMessage(), 'Related added getMessage() is not as expected');
 
         static::assertTrue($relation->related()->has(2));
         static::assertInstanceOf(RelatedChangedDifference::class, $object = $relation->related()->get(2));
@@ -523,7 +522,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_changed_pivot_attributes_for_unchanged_belongs_to_many_connection()
+    public function it_compares_a_model_with_changed_pivot_attributes_for_unchanged_belongs_to_many_connection(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -538,7 +537,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedBetas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
 
@@ -591,7 +590,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_changed_pivot_attributes_for_unchanged_belongs_to_many_connection_with_model_change()
+    public function it_compares_a_model_with_changed_pivot_attributes_for_unchanged_belongs_to_many_connection_with_model_change(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -606,7 +605,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedBetas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
 
@@ -664,7 +663,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_model_with_unchanged_pivot_attributes_for_unchanged_belongs_to_many_connection()
+    public function it_compares_a_model_with_unchanged_pivot_attributes_for_unchanged_belongs_to_many_connection(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -679,7 +678,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedBetas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
 
@@ -728,7 +727,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_can_be_configured_to_ignore_model_changes_for_models_of_specific_model_relations()
+    public function it_can_be_configured_to_ignore_model_changes_for_models_of_specific_model_relations(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -738,7 +737,7 @@ class ComparerTest extends TestCase
         $model->load(['testRelatedModel', 'testRelatedAlphas']);
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setNestedCompareRelations(['testRelatedModel']);
         $comparer->setBeforeState($model);
 
@@ -759,7 +758,7 @@ class ComparerTest extends TestCase
         $model->load(['testRelatedModel', 'testRelatedAlphas']);
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setNestedCompareRelations(['testRelatedAlphas']);
         $comparer->setBeforeState($model);
 
@@ -782,7 +781,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_ignores_timestamp_changes_by_default()
+    public function it_ignores_timestamp_changes_by_default(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -790,7 +789,7 @@ class ComparerTest extends TestCase
         $model = TestModel::first();
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->created_at = $model->created_at->addDay();
@@ -807,7 +806,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_tracks_timestamp_changes_if_configured_to()
+    public function it_tracks_timestamp_changes_if_configured_to(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -815,7 +814,7 @@ class ComparerTest extends TestCase
         $model = TestModel::first();
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->ignoreTimestamps(false);
         $comparer->setBeforeState($model);
 
@@ -835,7 +834,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_ignores_changes_that_are_detected_on_loosy_comparison_by_default()
+    public function it_ignores_changes_that_are_detected_on_loosy_comparison_by_default(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -845,7 +844,7 @@ class ComparerTest extends TestCase
         $model->integer = 0;
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->float = null;
@@ -862,7 +861,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_tracks_changes_that_are_detected_on_loosy_comparison_if_configured_to()
+    public function it_tracks_changes_that_are_detected_on_loosy_comparison_if_configured_to(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -872,7 +871,7 @@ class ComparerTest extends TestCase
         $model->integer = 0;
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->useStrictComparison(true);
         $comparer->setBeforeState($model);
 
@@ -890,7 +889,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_allows_configuring_specific_attributes_to_ignore_per_model()
+    public function it_allows_configuring_specific_attributes_to_ignore_per_model(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -900,7 +899,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel', 'testRelatedAlphas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
 
         $comparer->setIgnoredAttributesForModels([
             TestRelatedModel::class => [ 'name' ],
@@ -952,7 +951,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_tracks_models_related_after_that_were_created_since_the_before_state()
+    public function it_tracks_models_related_after_that_were_created_since_the_before_state(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -961,7 +960,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel', 'testRelatedAlphas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $create = TestRelatedModel::create([
@@ -1010,7 +1009,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_tracks_models_related_before_that_were_deleted_since_the_before_state()
+    public function it_tracks_models_related_before_that_were_deleted_since_the_before_state(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -1020,7 +1019,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedModel', 'testRelatedAlphas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         //$model->testRelatedModel()->dissociate();
@@ -1058,7 +1057,7 @@ class ComparerTest extends TestCase
     /**
      * @test
      */
-    function it_compares_a_complex_of_deeply_changed_related_models()
+    public function it_compares_a_complex_of_deeply_changed_related_models(): void
     {
         // Set up
         $this->setUpSimpleBeforeState();
@@ -1071,7 +1070,7 @@ class ComparerTest extends TestCase
         $model->load('testRelatedAlphas.testRelatedBetas');
 
         // Test
-        $comparer = new Comparer();
+        $comparer = $this->makeComparer();
         $comparer->setBeforeState($model);
 
         $model->boolean = true;
@@ -1229,4 +1228,8 @@ class ComparerTest extends TestCase
         TestRelatedBeta::forceCreate([ 'name' => 'Beta 3' ]);
     }
 
+    protected function makeComparer(): Comparer
+    {
+        return app(Comparer::class);
+    }
 }

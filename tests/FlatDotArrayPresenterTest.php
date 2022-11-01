@@ -1,6 +1,6 @@
 <?php
-/** @noinspection ReturnTypeCanBeDeclaredInspection */
-/** @noinspection AccessModifierPresentedInspection */
+
+declare(strict_types=1);
 
 namespace Czim\ModelComparer\Test;
 
@@ -21,11 +21,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class FlatDotArrayPresenterTest extends TestCase
 {
-
     /**
      * @test
      */
-    function it_presents_simple_attribute_changes()
+    public function it_presents_simple_attribute_changes(): void
     {
         $difference = new ModelDifference(
             TestModel::class,
@@ -49,7 +48,7 @@ class FlatDotArrayPresenterTest extends TestCase
     /**
      * @test
      */
-    function it_presents_complex_attribute_changes()
+    public function it_presents_complex_attribute_changes(): void
     {
         $difference = new ModelDifference(
             TestModel::class,
@@ -133,5 +132,4 @@ class FlatDotArrayPresenterTest extends TestCase
         static::assertArrayHasKey('testPivotRelation.2.related.pivot.testing', $output);
         static::assertArrayHasKey('testPivotRelation.3.related', $output);
     }
-
 }
