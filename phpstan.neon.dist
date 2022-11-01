@@ -1,0 +1,16 @@
+includes:
+    - ./vendor/nunomaduro/larastan/extension.neon
+    - ./vendor/phpstan/phpstan-phpunit/extension.neon
+    - ./vendor/phpstan/phpstan-mockery/extension.neon
+
+parameters:
+    paths:
+        - src
+        - tests
+    excludePaths:
+        - tests\Helpers\*
+    ignoreErrors:
+        # false negative: toString()__ can throw Throwable, depending on the context.
+        -
+            message: '#Dead catch#'
+            path: src/Presenters/ValueStringifier.ph
