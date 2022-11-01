@@ -491,7 +491,7 @@ class Comparer implements ComparerInterface
                     // If the newly added model was created, track this as the difference
                     if ($modelClass !== null && $this->wasModelCreated($modelClass, $keyOnlyAfter)) {
                         $difference = new Data\ModelCreatedDifference(
-                            ($classAfter ?: $modelClass) ?? '',
+                            $classAfter ?: $modelClass,
                             $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $keyAfter ], 'attributes', [])),
                             new Data\DifferenceCollection()
                         );
@@ -605,7 +605,7 @@ class Comparer implements ComparerInterface
     /**
      * @param string|int $key
      * @param bool       $morph
-     * @return array{string, class-string<Model>} key, model class
+     * @return array{string, class-string<Model>|null} key, model class
      */
     protected function getKeyAndClassFromReference(string|int $key, bool $morph = false): array
     {

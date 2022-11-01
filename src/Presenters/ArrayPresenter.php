@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Czim\ModelComparer\Presenters;
 
+use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
 use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 use Czim\ModelComparer\Contracts\DifferencePresenterInterface;
 use Czim\ModelComparer\Data\AbstractRelatedDifference;
@@ -94,7 +95,7 @@ class ArrayPresenter implements DifferencePresenterInterface
             if ($difference->hasMessage()) {
                 $output['related'] = $difference->getMessage();
             }
-        } else {
+        } elseif ($difference instanceof DifferenceLeafInterface) {
             $output['related'] = (string) $difference;
         }
 

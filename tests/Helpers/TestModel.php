@@ -10,14 +10,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * @property integer $id
- * @property string  $name
- * @property int     $integer
- * @property float   $float
- * @property string  $text
- * @property bool    $boolean
- * @property Carbon  $created_at
- * @property Carbon  $updated_at
+ * @property integer     $id
+ * @property string|null $name
+ * @property int|null    $integer
+ * @property float|null  $float
+ * @property string|null $text
+ * @property bool|null   $boolean
+ * @property Carbon      $created_at
+ * @property Carbon      $updated_at
  */
 class TestModel extends Model
 {

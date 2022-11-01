@@ -12,9 +12,9 @@ class PaperclipAttachmentStrategy implements CompareStrategyInterface
     /**
      * Returns whether two values are equal.
      *
-     * @param AttachmentInterface $before
-     * @param AttachmentInterface $after
-     * @param bool                $strict Whether to only consider strict sameness
+     * @param AttachmentInterface|null $before
+     * @param AttachmentInterface|null $after
+     * @param bool                     $strict Whether to only consider strict sameness
      * @return bool
      */
     public function equal(mixed $before, mixed $after, bool $strict = false): bool
