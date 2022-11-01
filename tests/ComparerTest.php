@@ -428,7 +428,7 @@ class ComparerTest extends TestCase
         $comparer->setBeforeState($model);
 
         /** @var TestRelatedModel $related */
-        $related = $model->testModels()->get()->last();
+        $related = $model->testModels()->orderByDesc('id')->first();
         $related->name = 'Changed Related Name';
         $related->save();
 
