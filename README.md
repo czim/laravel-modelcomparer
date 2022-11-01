@@ -16,13 +16,12 @@ The comparer instance tracks the changes and offers the means to create concise 
 
 ## Version Compatibility
 
- Laravel         | Package
-:----------------|:--------
- 5.3 and older   | 0.9
- 5.4 to 5.7      | 1.4
- 5.8             | 1.5
- 5.8, 6.0+       | 2.0
-
+| Laravel       | Package | PHP Version |
+|:--------------|:--------|:------------|
+| 5.3 and older | 0.9     |
+| 5.4 to 5.7    | 1.4     |
+| 5.8           | 1.5     |
+| 5.8, 6.0+     | 2.0     |
 
 ## Install
 
@@ -32,7 +31,8 @@ Via Composer
 $ composer require czim/laravel-modelcomparer
 ```
 
-In your `config/app.php` config, add the service provider
+If you're not using auto-discovery (or are installing a version older than 3.0),
+add the service provider in your `config/app.php` config.
 
 ``` php
     Czim\ModelComparer\ModelComparerServiceProvider::class,
