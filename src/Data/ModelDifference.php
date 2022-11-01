@@ -1,9 +1,13 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Traits\ToArrayJsonable;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Difference rapport on an Eloquent relation of a model.
@@ -13,36 +17,19 @@ class ModelDifference implements Arrayable, Jsonable
     use ToArrayJsonable;
 
     /**
-     * The FQN of the model for which differences are represented.
-     *
-     * @var string
+     * @param class-string<Model>|string                       $modelClass or empty string
+     * @param DifferenceCollection<AttributeDifference>        $attributes
+     * @param DifferenceCollection<AbstractRelationDifference> $relations
      */
-    protected $modelClass;
-
-    /**
-     * Differences in model attributes.
-     *
-     * @var DifferenceCollection|AttributeDifference[]
-     */
-    protected $attributes;
-
-    /**
-     * Differences in related models.
-     *
-     * @var DifferenceCollection|AbstractRelationDifference[]
-     */
-    protected $relations;
-
-
-    public function __construct(?string $class, DifferenceCollection $attributes, DifferenceCollection $relations)
-    {
-        $this->modelClass = $class ?? '';
-        $this->attributes = $attributes;
-        $this->relations  = $relations;
+    public function __construct(
+        protected readonly string $modelClass,
+        protected readonly DifferenceCollection $attributes,
+        protected readonly DifferenceCollection $relations,
+    ) {
     }
 
     /**
-     * @return string
+     * @return class-string<Model>
      */
     public function modelClass(): string
     {
@@ -56,11 +43,12 @@ class ModelDifference implements Arrayable, Jsonable
      */
     public function isDifferent(): bool
     {
-        return count($this->attributes) > 0 || count($this->relations) > 0;
+        return count($this->attributes) > 0
+            || count($this->relations) > 0;
     }
 
     /**
-     * @return AttributeDifference[]|DifferenceCollection
+     * @return DifferenceCollection<AttributeDifference>
      */
     public function attributes(): DifferenceCollection
     {
@@ -68,7 +56,7 @@ class ModelDifference implements Arrayable, Jsonable
     }
 
     /**
-     * @return AbstractRelationDifference[]|DifferenceCollection
+     * @return DifferenceCollection<AbstractRelationDifference>
      */
     public function relations(): DifferenceCollection
     {
@@ -78,7 +66,7 @@ class ModelDifference implements Arrayable, Jsonable
     /**
      * Get the instance as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -86,9 +74,7 @@ class ModelDifference implements Arrayable, Jsonable
 
         if (count($this->attributes)) {
             $difference['attributes'] = array_map(
-                static function (AttributeDifference $item) {
-                    return (string) $item;
-                },
+                static fn (AttributeDifference $item): string => (string) $item,
                 $this->attributes->toArray()
             );
         }
@@ -99,5 +85,4 @@ class ModelDifference implements Arrayable, Jsonable
 
         return $difference;
     }
-
 }

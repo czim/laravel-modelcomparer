@@ -54,11 +54,11 @@ interface ComparerInterface
     /**
      * Sets a list of attributes to ignore for a given model.
      *
-     * @param string|Model $model
-     * @param array        $ignored
+     * @param class-string<Model>|Model $model
+     * @param string[]                  $ignored
      * @return $this
      */
-    public function setIgnoredAttributesForModel($model, array $ignored): ComparerInterface;
+    public function setIgnoredAttributesForModel(string|Model $model, array $ignored): ComparerInterface;
 
 
     /**

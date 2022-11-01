@@ -1,8 +1,12 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 use Czim\ModelComparer\Traits\ToArrayJsonable;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Difference rapport for a related model that was newly added for a plural relation.
@@ -16,43 +20,38 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
      *
      * @var mixed|false
      */
-    protected $key;
+    protected mixed $key;
 
     /**
      * The related model class (after).
      *
      * Only set if the relation allows variable model classes.
      *
-     * @var string|null
+     * @var class-string<Model>|null
      */
-    protected $class;
+    protected ?string $class;
 
     /**
      * The difference tree for the related model.
      *
-     * @var ModelDifference
+     * @var ModelDifference|null
      */
-    protected $difference;
+    protected ?ModelDifference $difference;
 
 
     /**
-     * @param mixed|false                                 $key          key for the newly related model
-     * @param string|null                                 $class
-     * @param ModelDifference|ModelCreatedDifference|null $difference   difference if model is newly created
+     * @param mixed|false              $key        key for the newly related model
+     * @param class-string<Model>|null $class
+     * @param ModelDifference|null     $difference difference if model is newly created
      */
-    public function __construct($key, ?string $class = null, ModelDifference $difference = null)
+    public function __construct(mixed $key, ?string $class = null, ?ModelDifference $difference = null)
     {
         $this->key        = $key;
         $this->class      = $class;
         $this->difference = $difference;
     }
 
-    /**
-     * Returns related model key.
-     *
-     * @return mixed
-     */
-    public function getKey()
+    public function getKey(): mixed
     {
         return $this->key;
     }
@@ -60,7 +59,7 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
     /**
      * Returns related model class, if not a morphTo relation.
      *
-     * @return string|null
+     * @return class-string<Model>|null
      */
     public function getClass(): ?string
     {
@@ -72,9 +71,9 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
      *
      * Can be just the key, or class:key, depending on whether the model class is set.
      *
-     * @return mixed|string
+     * @return mixed
      */
-    public function getModelReference()
+    public function getModelReference(): mixed
     {
         if ($this->class) {
             return $this->class . ':' . $this->key;
@@ -88,15 +87,13 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
      *
      * @return ModelDifference|bool
      */
-    public function difference()
+    public function difference(): ModelDifference|bool
     {
         return $this->difference ?: false;
     }
 
     /**
-     * Get the instance as an array.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -121,16 +118,11 @@ class RelatedAddedDifference extends AbstractRelatedDifference implements Differ
         return true;
     }
 
-    /**
-     * Returns a string representation of difference on the node level itself.
-     *
-     * @return string|null
-     */
     public function getMessage(): ?string
     {
         return 'Newly connected to '
-             . ($this->difference ? 'newly created ' : null)
-             . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
+            . ($this->difference ? 'newly created ' : null)
+            . ($this->class ? $this->class . ' ' : null)
+            . '#' . $this->key;
     }
-
 }

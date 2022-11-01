@@ -1,5 +1,10 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
+
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Difference rapport on a single related model for an Eloquent relation,
@@ -7,34 +12,33 @@ namespace Czim\ModelComparer\Data;
  */
 class RelatedReplacedDifference extends RelatedChangedDifference
 {
-
     /**
      * The related model's key (before).
      *
-     * @var mixed|false
+     * @var mixed
      */
-    protected $keyBefore;
+    protected mixed $keyBefore;
 
     /**
      * The related model class (before).
      *
      * Only set if the relation allows variable model classes.
      *
-     * @var string|null
+     * @var class-string<Model>|null
      */
-    protected $classBefore;
+    protected ?string $classBefore;
 
 
     /**
-     * {@inheritdoc}
-     * @param mixed       $keyBefore
-     * @param string|null $classBefore
+     * {@inheritDoc}
+     * @param mixed                    $keyBefore
+     * @param class-string<Model>|null $classBefore
      */
     public function __construct(
-        $key,
+        mixed $key,
         ?string $class,
         ModelDifference $difference,
-        $keyBefore,
+        mixed $keyBefore,
         ?string $classBefore = null
     ) {
         parent::__construct($key, $class, $difference);
@@ -43,12 +47,13 @@ class RelatedReplacedDifference extends RelatedChangedDifference
         $this->classBefore = $classBefore;
     }
 
+
     /**
-     * Returns related model key for the before situation.
+     * Returns related model key in the before situation.
      *
      * @return mixed
      */
-    public function getKeyBefore()
+    public function getKeyBefore(): mixed
     {
         return $this->keyBefore;
     }
@@ -56,7 +61,7 @@ class RelatedReplacedDifference extends RelatedChangedDifference
     /**
      * Returns related model class for the before situation, if not a morphTo relation.
      *
-     * @return string|null
+     * @return class-string<Model>|null
      */
     public function getClassBefore(): ?string
     {
@@ -68,9 +73,9 @@ class RelatedReplacedDifference extends RelatedChangedDifference
      *
      * Can be just the key, or class:key, depending on whether the model class is set.
      *
-     * @return mixed|string
+     * @return mixed
      */
-    public function getModelReferenceBefore()
+    public function getModelReferenceBefore(): mixed
     {
         if ($this->classBefore) {
             return $this->classBefore . ':' . $this->keyBefore;
@@ -89,17 +94,13 @@ class RelatedReplacedDifference extends RelatedChangedDifference
         return true;
     }
 
-    /**
-     * Returns a string representation of difference on the node level itself.
-     *
-     * @return string|null
-     */
     public function getMessage(): ?string
     {
         return 'Replaced '
-            . ($this->classBefore ? $this->classBefore . ' ' : null) . '#' . $this->keyBefore
+            . ($this->classBefore ? $this->classBefore . ' ' : null)
+            . '#' . $this->keyBefore
             . ' with '
-            . ($this->class ? $this->class . ' ' : null) . '#' . $this->key;
+            . ($this->class ? $this->class . ' ' : null)
+            . '#' . $this->key;
     }
-
 }

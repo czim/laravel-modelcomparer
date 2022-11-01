@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
@@ -18,41 +21,35 @@ class AttributeDifference implements DifferenceLeafInterface
      *
      * @var mixed
      */
-    protected $before;
+    protected mixed $before;
 
     /**
      * State of the attribute after.
      *
      * @var mixed
      */
-    protected $after;
+    protected mixed $after;
 
     /**
      * Whether the value did not exist for a key in the before array.
      *
      * @var bool
      */
-    protected $beforeDoesNotExist = false;
+    protected bool $beforeDoesNotExist = false;
 
     /**
      * Whether the value did not exist for a key in the after array.
      *
      * @var bool
      */
-    protected $afterDoesNotExist = false;
+    protected bool $afterDoesNotExist = false;
 
 
-    /**
-     * @param mixed $before
-     * @param mixed $after
-     * @param bool  $beforeDoesNotExist
-     * @param bool  $afterDoesNotExist
-     */
     public function __construct(
-        $before = null,
-        $after = null,
+        mixed $before = null,
+        mixed $after = null,
         bool $beforeDoesNotExist = false,
-        bool $afterDoesNotExist = false
+        bool $afterDoesNotExist = false,
     ) {
         $this->before = $before;
         $this->after  = $after;
@@ -69,18 +66,12 @@ class AttributeDifference implements DifferenceLeafInterface
     }
 
 
-    /**
-     * @return mixed
-     */
-    public function before()
+    public function before(): mixed
     {
         return $this->before;
     }
 
-    /**
-     * @return mixed
-     */
-    public function after()
+    public function after(): mixed
     {
         return $this->after;
     }
@@ -109,7 +100,7 @@ class AttributeDifference implements DifferenceLeafInterface
      * @param mixed $before
      * @return $this
      */
-    public function setBefore($before): AttributeDifference
+    public function setBefore(mixed $before): static
     {
         $this->before = $before;
 
@@ -120,7 +111,7 @@ class AttributeDifference implements DifferenceLeafInterface
      * @param mixed $after
      * @return $this
      */
-    public function setAfter($after): AttributeDifference
+    public function setAfter(mixed $after): static
     {
         $this->after = $after;
 
@@ -130,38 +121,33 @@ class AttributeDifference implements DifferenceLeafInterface
     /**
      * Renders difference as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
         $difference = [];
 
-        if ( ! $this->beforeDoesNotExist) {
+        if (! $this->beforeDoesNotExist) {
             $difference['before'] = $this->normalizeToString($this->before, null);
         }
 
-        if ( ! $this->afterDoesNotExist) {
+        if (! $this->afterDoesNotExist) {
             $difference['after'] = $this->normalizeToString($this->after, null);
         }
 
         return $difference;
     }
 
-    /**
-     * Renders difference as a string value.
-     *
-     * @return string
-     */
     public function __toString(): string
     {
         $before = null;
         $after  = null;
 
-        if ( ! $this->beforeDoesNotExist) {
+        if (! $this->beforeDoesNotExist) {
             $before = $this->normalizeToString($this->before);
         }
 
-        if ( ! $this->afterDoesNotExist) {
+        if (! $this->afterDoesNotExist) {
             $after = $this->normalizeToString($this->after);
         }
 
@@ -173,17 +159,17 @@ class AttributeDifference implements DifferenceLeafInterface
             return "No longer present (was {$before})";
         }
 
-        return $before . ' changed to ' . $after;
+        return "{$before} changed to {$after}";
     }
 
     /**
      * Attempts to make strings out of a mixed value.
      *
      * @param mixed       $value
-     * @param string|null $enclose  enclosing symbol, if string values should be enclosed
+     * @param string|null $enclose enclosing symbol, if string values should be enclosed
      * @return string
      */
-    protected function normalizeToString($value, ?string $enclose = '"'): string
+    protected function normalizeToString(mixed $value, ?string $enclose = '"'): string
     {
         return app(ValueStringifierInterface::class)->make($value, $enclose);
     }

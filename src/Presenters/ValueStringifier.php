@@ -11,22 +11,17 @@ use Throwable;
 
 class ValueStringifier implements ValueStringifierInterface
 {
-    /**
-     * @param mixed       $value
-     * @param string|null $wrap
-     * @return string
-     */
-    public function make($value, ?string $wrap = '"'): string
+    public function make(mixed $value, ?string $wrap = '"'): string
     {
-        if (null === $value) {
+        if ($value === null) {
             return 'NULL';
         }
 
-        if (false === $value) {
+        if ($value === false) {
             return 'FALSE';
         }
 
-        if (true === $value) {
+        if ($value === true) {
             return 'TRUE';
         }
 

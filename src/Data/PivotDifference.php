@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Traits\ToArrayJsonable;
@@ -13,16 +16,10 @@ class PivotDifference implements Arrayable, Jsonable
     use ToArrayJsonable;
 
     /**
-     * Differences in model attributes.
-     *
-     * @var DifferenceCollection|AttributeDifference[]
+     * @param DifferenceCollection<AttributeDifference> $attributes
      */
-    protected $attributes;
-
-
-    public function __construct(DifferenceCollection $attributes)
+    public function __construct(protected readonly DifferenceCollection $attributes)
     {
-        $this->attributes = $attributes;
     }
 
     /**
@@ -36,7 +33,7 @@ class PivotDifference implements Arrayable, Jsonable
     }
 
     /**
-     * @return AttributeDifference[]|DifferenceCollection
+     * @return DifferenceCollection<AttributeDifference>
      */
     public function attributes(): DifferenceCollection
     {
@@ -44,22 +41,17 @@ class PivotDifference implements Arrayable, Jsonable
     }
 
     /**
-     * Get the instance as an array.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
-        if ( ! count($this->attributes)) {
+        if (! count($this->attributes)) {
             return [];
         }
 
         return array_map(
-            static function (AttributeDifference $item) {
-                return (string) $item;
-            },
+            static fn (AttributeDifference $item): string => (string) $item,
             $this->attributes->toArray()
         );
     }
-
 }

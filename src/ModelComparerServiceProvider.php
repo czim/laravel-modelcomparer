@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer;
 
 use Czim\ModelComparer\Comparer\ComparableDataTreeFactory;

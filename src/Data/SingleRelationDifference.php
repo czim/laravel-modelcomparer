@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Contracts\DifferenceLeafInterface;
@@ -9,25 +12,19 @@ use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
  */
 class SingleRelationDifference extends AbstractRelationDifference
 {
+    protected AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface $difference;
 
-    /**
-     * Difference node or leaf that represents the single relation's change.
-     *
-     * @var AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface
-     */
-    protected $difference;
-
-    public function __construct(string $method, string $type, AbstractRelatedDifference $difference)
-    {
+    public function __construct(
+        string $method,
+        string $type,
+        AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface $difference,
+    ) {
         parent::__construct($method, $type);
 
         $this->difference = $difference;
     }
 
-    /**
-     * @return AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface
-     */
-    public function difference(): AbstractRelatedDifference
+    public function difference(): AbstractRelatedDifference|DifferenceLeafInterface|DifferenceNodeInterface
     {
         return $this->difference;
     }
@@ -61,9 +58,7 @@ class SingleRelationDifference extends AbstractRelationDifference
     }
 
     /**
-     * Get the instance as an array.
-     *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -79,5 +74,4 @@ class SingleRelationDifference extends AbstractRelationDifference
 
         return $difference;
     }
-
 }

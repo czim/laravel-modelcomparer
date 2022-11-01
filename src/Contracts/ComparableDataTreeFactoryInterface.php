@@ -22,7 +22,7 @@ interface ComparableDataTreeFactoryInterface
      * Set relation dot-notation strings for relations to fully compare recursively.
      *
      * Ex.:
-     *      [ article.transations, article.articleSorts.translations ]
+     *      [ article.translations, article.articleSorts.translations ]
      *
      * @param string[] $compareFully
      */
@@ -40,15 +40,15 @@ interface ComparableDataTreeFactoryInterface
      *
      * This overwrites all currently set ignores per model.
      *
-     * @param array<string, string[]> $ignoredPerModel    array of arrays with attribute name strings, keyed by model FQN
+     * @param array<class-string<Model>, string[]> $ignoredPerModel arrays with attribute names, keyed by model FQN
      */
     public function setIgnoredAttributesForModels(array $ignoredPerModel): void;
 
     /**
      * Sets a list of attributes to ignore for a given model.
      *
-     * @param string   $modelClass
-     * @param string[] $ignored
+     * @param class-string<Model> $modelClass
+     * @param string[]            $ignored
      */
     public function setIgnoredAttributesForModel(string $modelClass, array $ignored): void;
 }

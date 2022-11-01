@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Comparer\Strategies;
 
 use Czim\ModelComparer\Contracts\CompareStrategyInterface;
@@ -12,12 +14,15 @@ class PaperclipAttachmentStrategy implements CompareStrategyInterface
      *
      * @param AttachmentInterface $before
      * @param AttachmentInterface $after
-     * @param bool  $strict     whether to only consider strict sameness
+     * @param bool                $strict Whether to only consider strict sameness
      * @return bool
      */
-    public function equal($before, $after, bool $strict = false): bool
+    public function equal(mixed $before, mixed $after, bool $strict = false): bool
     {
-        if (! $before instanceof AttachmentInterface || ! $after instanceof AttachmentInterface) {
+        if (
+            ! $before instanceof AttachmentInterface
+            || ! $after instanceof AttachmentInterface
+        ) {
             return false;
         }
 

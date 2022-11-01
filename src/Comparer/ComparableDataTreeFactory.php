@@ -26,30 +26,30 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
      *
      * @var string[]|false
      */
-    protected $nestedCompareFully = false;
+    protected array|false $nestedCompareFully = false;
 
     /**
      * Whether translations will always be fully compared, regardless of $nestedCompareFully.
      *
      * @var bool
      */
-    protected $alwaysCompareTranslationsFully = true;
+    protected bool $alwaysCompareTranslationsFully = true;
 
     /**
      * Whether changes to model timestamps should be ignored.
      *
      * @var bool
      */
-    protected $ignoreTimestamps = true;
+    protected bool $ignoreTimestamps = true;
 
     /**
      * A list of attributes to ignore per model.
      *
      * An array of arrays, keyed by model FQN.
      *
-     * @var array
+     * @var array<class-string<Model>, string[]>
      */
-    protected $ignoreAttributesPerModel = [];
+    protected array $ignoreAttributesPerModel = [];
 
 
     /**
@@ -74,7 +74,7 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
      * Set relation dot-notation strings for relations to fully compare recursively.
      *
      * Ex.:
-     *      [ article.transations, article.articleSorts.translations ]
+     *      [ article.translations, article.articleSorts.translations ]
      *
      * @param string[] $compareFully
      */
@@ -98,7 +98,7 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
      *
      * This overwrites all currently set ignores per model.
      *
-     * @param array<string, string[]> $ignoredPerModel    array of arrays with attribute name strings, keyed by model FQN
+     * @param array<class-string<Model>, string[]> $ignoredPerModel arrays with attribute names, keyed by model FQN
      */
     public function setIgnoredAttributesForModels(array $ignoredPerModel): void
     {
@@ -108,8 +108,8 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
     /**
      * Sets a list of attributes to ignore for a given model.
      *
-     * @param string   $modelClass
-     * @param string[] $ignored
+     * @param class-string<Model> $modelClass
+     * @param string[]            $ignored
      */
     public function setIgnoredAttributesForModel(string $modelClass, array $ignored): void
     {
@@ -120,54 +120,52 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
      * Builds a normalized tree that is ready for comparison-usage.
      *
      * @param Model       $model
-     * @param null|string $parent       dot-notation parent chain
-     * @return array
+     * @param string|null $parent dot-notation parent chain
+     * @return array{class:class-string<Model>, pivot:array<string, mixed>, attributes:array<string, mixed>, relations:array<string, mixed>}
      */
     protected function buildNormalizedArrayTree(Model $model, ?string $parent = null): array
     {
         // Analyze relations, build nested tree
         $relationKeys = array_keys($model->getRelations());
         $relationTree = [];
-        $pivot = [];
+        $pivot        = [];
 
         // Keep a list of foreign keys for BelongsTo, MorphTo relations
         $localForeignKeys = [];
 
         foreach ($relationKeys as $relationKey) {
+            if ($relationKey === 'pivot') {
+                $pivotObject = Arr::get($model->getRelations(), 'pivot');
 
-            if (    $relationKey === 'pivot'
-                &&  (   ($pivotObject = Arr::get($model->getRelations(), 'pivot')) instanceof Relations\Pivot
-                    ||  ($pivotObject = Arr::get($model->getRelations(), 'pivot')) instanceof Relations\MorphPivot
-                )
-            ) {
-                /** @var Relations\MorphPivot $pivotObject */
-                // todo: get morph type keys
+                if ($pivotObject instanceof Relations\Pivot) {
+                    /** @var Relations\Pivot $pivotObject */
+                    $pivotKeys = array_filter([
+                        $pivotObject->getKey(),
+                        $pivotObject->getOtherKey(),
+                        $pivotObject->getForeignKey(),
+                    ]);
 
-                /** @var Relations\Pivot $pivotObject */
-                $pivotKeys = array_filter([
-                    $pivotObject->getKey(),
-                    $pivotObject->getOtherKey(),
-                    $pivotObject->getForeignKey(),
-                ]);
+                    if ($pivotObject->hasTimestampAttributes()) {
+                        $pivotKeys[] = $pivotObject->getCreatedAtColumn();
+                        $pivotKeys[] = $pivotObject->getUpdatedAtColumn();
+                    }
 
-                if ($pivotObject->hasTimestampAttributes()) {
-                    $pivotKeys[] = $pivotObject->getCreatedAtColumn();
-                    $pivotKeys[] = $pivotObject->getUpdatedAtColumn();
+                    $pivotAttributes = Arr::except($pivotObject->attributesToArray(), $pivotKeys);
+
+                    if (count($pivotAttributes)) {
+                        $pivot = $pivotAttributes;
+                    }
+
+                    continue;
                 }
-
-                $pivotAttributes = Arr::except($pivotObject->attributesToArray(), $pivotKeys);
-
-                if (count($pivotAttributes)) {
-                    $pivot = $pivotAttributes;
-                }
-
-                continue;
             }
 
+            $relationName = Str::camel($relationKey);
+
             /** @var Relations\Relation $relationInstance */
-            $relationName     = Str::camel($relationKey);
             $relationInstance = $model->{$relationName}();
-            $nestedParent     = ($parent ? $parent . '.' : '') . $relationName;
+
+            $nestedParent = ($parent ? $parent . '.' : '') . $relationName;
 
             $isSingle = $this->isSingleRelation($relationInstance);
             $isMorph  = $this->isMorphTo($relationInstance);
@@ -175,11 +173,11 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
 
             $foreignKeys = [];
 
-            if ($relationInstance instanceof Relations\BelongsTo) {
-                $foreignKeys[] = $relationInstance->getForeignKeyName();
-            } elseif ($relationInstance instanceof Relations\MorphTo) {
+            if ($relationInstance instanceof Relations\MorphTo) {
                 $foreignKeys[] = $relationInstance->getForeignKeyName();
                 $foreignKeys[] = $relationInstance->getMorphType();
+            } elseif ($relationInstance instanceof Relations\BelongsTo) {
+                $foreignKeys[] = $relationInstance->getForeignKeyName();
             }
 
             $items = [];
@@ -188,25 +186,25 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
 
             if ($isSingle) {
                 /** @var Model|null $childModel */
-                if ($childModel = $model->{$relationName}) {
+                $childModel = $model->{$relationName};
+                if ($childModel) {
                     $childModels->push($childModel);
                 }
-
             } else {
                 /** @var Model|null $childModel */
                 $childModels = $model->{$relationName};
             }
 
             foreach ($childModels as $childModel) {
-
                 $key = $childModel->getKey();
+
                 if ($isMorph) {
                     $key = get_class($childModel) . ':' . $key;
                 }
 
-                // If the compare should not be nested contextually, only include a list of keys
+                // If the compare should not be nested contextually, only include a list of keys.
                 if (
-                    false !== $this->nestedCompareFully
+                    $this->nestedCompareFully !== false
                     && (! $this->alwaysCompareTranslationsFully || $relationName !== 'translations')
                     && ! in_array($nestedParent, $this->nestedCompareFully, true)
                 ) {
@@ -256,7 +254,6 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
     {
         return $relation instanceof Relations\BelongsTo
             || $relation instanceof Relations\HasOne
-            || $relation instanceof Relations\MorphTo
             || $relation instanceof Relations\MorphOne;
     }
 
@@ -267,7 +264,6 @@ class ComparableDataTreeFactory implements ComparableDataTreeFactoryInterface
 
     protected function hasPivotTable(Relations\Relation $relation): bool
     {
-        return $relation instanceof Relations\BelongsToMany
-            || $relation instanceof Relations\MorphToMany;
+        return $relation instanceof Relations\BelongsToMany;
     }
 }

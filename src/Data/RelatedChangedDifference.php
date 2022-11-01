@@ -1,8 +1,12 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 use Czim\ModelComparer\Traits\ToArrayJsonable;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Difference rapport on a single related model for an Eloquent relation,
@@ -15,45 +19,45 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
     /**
      * The related model's key.
      *
-     * @var mixed|false
+     * @var mixed
      */
-    protected $key;
+    protected mixed $key;
 
     /**
      * The related model class.
      *
      * Only set if the relation allows variable model classes.
      *
-     * @var string|null
+     * @var class-string<Model>|null
      */
-    protected $class;
+    protected ?string $class;
 
     /**
      * Model difference instance, describing how the related model itself was changed.
      *
      * @var ModelDifference
      */
-    protected $difference;
+    protected ModelDifference $difference;
 
     /**
-     * Difference for pivot attributes
+     * Difference for pivot attributes.
      *
-     * @var false|PivotDifference
+     * @var PivotDifference|false
      */
-    protected $pivotDifference;
+    protected PivotDifference|false $pivotDifference;
 
 
     /**
-     * @param mixed|false     $key false if the model was not related before.
-     * @param string|null     $class
-     * @param ModelDifference $difference
-     * @param PivotDifference $pivotDifference
+     * @param mixed                    $key false if the model was not related before.
+     * @param class-string<Model>|null $class
+     * @param ModelDifference          $difference
+     * @param PivotDifference|null     $pivotDifference
      */
     public function __construct(
-        $key,
+        mixed $key,
         ?string $class,
         ModelDifference $difference,
-        PivotDifference $pivotDifference = null
+        PivotDifference $pivotDifference = null,
     ) {
         $this->key             = $key;
         $this->class           = $class;
@@ -61,12 +65,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
         $this->pivotDifference = $pivotDifference ?: false;
     }
 
-    /**
-     * Returns related model key.
-     *
-     * @return mixed
-     */
-    public function getKey()
+    public function getKey(): mixed
     {
         return $this->key;
     }
@@ -74,7 +73,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
     /**
      * Returns related model class, if not a morphTo relation.
      *
-     * @return string|null
+     * @return class-string<Model>|null
      */
     public function getClass(): ?string
     {
@@ -98,17 +97,17 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      */
     public function isPivotRelated(): bool
     {
-        return (bool) $this->pivotDifference;
+        return $this->pivotDifference !== false;
     }
 
     /**
      * Returns differences for pivot attributes, or false if this is not a pivot relation.
      *
-     * @return false|PivotDifference
+     * @return PivotDifference|false
      */
-    public function pivotDifference()
+    public function pivotDifference(): PivotDifference|false
     {
-        if ( ! $this->pivotDifference) {
+        if (! $this->pivotDifference) {
             return false;
         }
 
@@ -120,9 +119,9 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
      *
      * Can be just the key, or class:key, depending on whether the model class is set.
      *
-     * @return mixed|string
+     * @return mixed
      */
-    public function getModelReference()
+    public function getModelReference(): mixed
     {
         if ($this->class) {
             return $this->class . ':' . $this->key;
@@ -134,7 +133,7 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
     /**
      * Get the instance as an array.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -170,5 +169,4 @@ class RelatedChangedDifference extends AbstractRelatedDifference implements Diff
     {
         return null;
     }
-
 }

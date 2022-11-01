@@ -1,66 +1,54 @@
 <?php
+
+declare(strict_types=1);
+
 namespace Czim\ModelComparer\Data;
 
 use Czim\ModelComparer\Contracts\DifferenceNodeInterface;
 use Czim\ModelComparer\Traits\ToArrayJsonable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 abstract class AbstractRelationDifference implements DifferenceNodeInterface
 {
     use ToArrayJsonable;
 
     /**
-     * The relation's method name.
-     *
-     * @var string
-     */
-    protected $method;
-
-    /**
-     * The relation class FQN.
-     *
-     * @var string
-     */
-    protected $type;
-
-    /**
-     * Whether the relation is plural
-     *
-     * @var bool
-     */
-    protected $plural = false;
-
-    /**
      * Whether the relation is of a morph type with variable related model classes.
      *
      * @var bool
      */
-    protected $isVariableModelClass = false;
+    protected bool $isVariableModelClass = false;
 
     /**
      * The model class FQN for the related model, if this is not a morphTo relation.
      *
-     * @var string|null
+     * @var class-string<Model>|null
      */
-    protected $modelClass;
+    protected ?string $modelClass = null;
 
 
-    public function __construct(string $method, string $type, bool $plural = false)
-    {
-        $this->method = $method;
-        $this->type   = $type;
-        $this->plural = $plural;
-
+    /**
+     * @param string                        $method The relation method name
+     * @param class-string<Relation<Model>> $type
+     * @param bool                          $plural Whether the relation is plural
+     */
+    public function __construct(
+        protected readonly string $method,
+        protected readonly string $type,
+        protected readonly bool $plural = false,
+    ) {
         $this->isVariableModelClass = $type === MorphTo::class;
     }
 
     /**
      * Sets the related model FQN.
      *
-     * @param string|null $class
+     * @param class-string<Model>|null $class
      * @return $this
      */
-    public function setModelClass($class): AbstractRelationDifference
+    public function setModelClass(?string $class): static
     {
         $this->modelClass = $class;
 
@@ -86,6 +74,9 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
         return $this->method;
     }
 
+    /**
+     * @return class-string<Relation<Model>>
+     */
     public function type(): string
     {
         return $this->type;
@@ -120,5 +111,4 @@ abstract class AbstractRelationDifference implements DifferenceNodeInterface
     {
         return null;
     }
-
 }

@@ -10,21 +10,21 @@ use Czim\Paperclip\Contracts\AttachmentInterface;
 
 class CompareStrategyFactory implements CompareStrategyFactoryInterface
 {
-    /**
-     * @param mixed $valueBefore
-     * @param mixed $valueAfter
-     * @return CompareStrategyInterface
-     */
-    public function make($valueBefore, $valueAfter): CompareStrategyInterface
+    public function make(mixed $valueBefore, mixed $valueAfter): CompareStrategyInterface
     {
         return app($this->determineStrategyClass($valueBefore, $valueAfter));
     }
 
-    protected function determineStrategyClass($valueBefore, $valueAfter): string
+    /**
+     * @param mixed $valueBefore
+     * @param mixed $valueAfter
+     * @return class-string<CompareStrategyInterface>
+     */
+    protected function determineStrategyClass(mixed $valueBefore, mixed $valueAfter): string
     {
         if (
-            is_a($valueBefore, AttachmentInterface::class)
-            || is_a($valueAfter, AttachmentInterface::class)
+            $valueBefore instanceof AttachmentInterface
+            || $valueAfter instanceof AttachmentInterface
         ) {
             return PaperclipAttachmentStrategy::class;
         }
