@@ -427,7 +427,7 @@ class Comparer implements ComparerInterface
 
                 if ($modelClass !== null && $this->wasModelCreated($modelClass, $key)) {
                     $difference = new Data\ModelCreatedDifference(
-                        $modelClass ?? '',
+                        $modelClass,
                         $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $key ], 'attributes', [])),
                         new Data\DifferenceCollection()
                     );
@@ -558,7 +558,7 @@ class Comparer implements ComparerInterface
 
             if ($modelClass !== null && $this->wasModelCreated($modelClass, $keyOnly)) {
                 $difference = new Data\ModelCreatedDifference(
-                    $modelClass ?? '',
+                    $modelClass,
                     $this->buildAttributesDifferenceList([], Arr::get($afterItems[ $keyOnly ], 'attributes', [])),
                     new Data\DifferenceCollection()
                 );
@@ -702,10 +702,11 @@ class Comparer implements ComparerInterface
     protected function listenForEvents(): void
     {
         $this->events->listen(['eloquent.created: *'], function (): void {
-            /** @var Model $model */
             if (func_num_args() > 1) {
+                /** @var Model $model */
                 $model = head(func_get_arg(1));
             } else {
+                /** @var Model $model */
                 $model = func_get_arg(0);
             }
 
@@ -724,10 +725,11 @@ class Comparer implements ComparerInterface
 
 
         $this->events->listen(['eloquent.deleted: *'], function (): void {
-            /** @var Model $model */
             if (func_num_args() > 1) {
+                /** @var Model $model */
                 $model = head(func_get_arg(1));
             } else {
+                /** @var Model $model */
                 $model = func_get_arg(0);
             }
 

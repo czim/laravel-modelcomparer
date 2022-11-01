@@ -4,10 +4,5 @@ namespace Czim\ModelComparer\Contracts;
 
 interface ValueStringifierInterface
 {
-    /**
-     * @param mixed       $value
-     * @param string|null $wrap
-     * @return string
-     */
-    public function make($value, ?string $wrap = '"'): string;
+    public function make(mixed $value, ?string $wrap = '"'): string;
 }
